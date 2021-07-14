@@ -201,7 +201,7 @@ export interface ChatData {
     continuationContents: {
       liveChatContinuation: {
         continuations: Continuations[],
-        actions: Actions[]
+        actions?: Actions[]
       }
     }
   },
@@ -221,7 +221,7 @@ export interface ChatXhrData {
   continuationContents: {
     liveChatContinuation: {
       continuations: Continuations[]
-      actions: Actions[]
+      actions?: Actions[]
     }
   }
 }

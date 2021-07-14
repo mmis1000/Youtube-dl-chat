@@ -2,11 +2,15 @@
 
 ## HTML(initial chat)
 
-https://www.youtube.com/live_chat?continuation=
+- `https://www.youtube.com/live_chat?continuation=`
+- `https://www.youtube.com/live_chat_replay?continuation=`
 
 ## JSON(following chat)
 
 ### Request
+
+- `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=`
+- `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat_replay?key=`
 
 ```js
 fetch("https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", {
