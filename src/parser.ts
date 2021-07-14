@@ -1,4 +1,4 @@
-import { ChatData, VideoData } from "./interfaces"
+import { ChatData, VideoData } from "./interfaces-youtube-response"
 
 export function parseVideo(html: string): VideoData {
     const initialData = /var ytInitialData =(.*?);<\/script/.exec(html)![1]

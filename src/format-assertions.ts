@@ -1,4 +1,4 @@
-import { VideoData, ChatData, ChatXhrData } from './interfaces'
+import { VideoData, ChatData, ChatXhrData } from './interfaces-youtube-response'
 
 import * as Chat1 from './samples/chat.json'
 
