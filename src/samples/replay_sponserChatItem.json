@@ -1,0 +1,88 @@
+{
+    "replayChatItemAction": {
+      "actions": [
+        {
+          "addChatItemAction": {
+            "item": {
+              "liveChatMembershipItemRenderer": {
+                "id": "ChwKGkNPWGt6dkdkNGZFQ0ZRU0pnZ29kSzN3RVFR",
+                "timestampUsec": "1626220080219523",
+                "timestampText": {
+                  "simpleText": "3:47:38"
+                },
+                "authorExternalChannelId": "UC7vsfROLlBpDOYn41G7kt0Q",
+                "headerSubtext": {
+                  "runs": [
+                    {
+                      "text": "歡迎加入 "
+                    },
+                    {
+                      "text": "Apprentice"
+                    },
+                    {
+                      "text": "！"
+                    }
+                  ]
+                },
+                "authorName": {
+                  "simpleText": "NoSiReapo"
+                },
+                "authorPhoto": {
+                  "thumbnails": [
+                    {
+                      "url": "https://yt4.ggpht.com/ytc/AKedOLSFxpWi-CE67e0nSNzakq5u-BDElrXCSV09mg=s32-c-k-c0x00ffffff-no-rj",
+                      "width": 32,
+                      "height": 32
+                    },
+                    {
+                      "url": "https://yt4.ggpht.com/ytc/AKedOLSFxpWi-CE67e0nSNzakq5u-BDElrXCSV09mg=s64-c-k-c0x00ffffff-no-rj",
+                      "width": 64,
+                      "height": 64
+                    }
+                  ]
+                },
+                "authorBadges": [
+                  {
+                    "liveChatAuthorBadgeRenderer": {
+                      "customThumbnail": {
+                        "thumbnails": [
+                          {
+                            "url": "https://yt3.ggpht.com/0putmr40i9MhFI2j8PCx7jHvicJN1qg9CwYuZKrYb281kqZhXHHCW9qXMC4xkNhvfDBzzyxsTow=s16-c-k"
+                          },
+                          {
+                            "url": "https://yt3.ggpht.com/0putmr40i9MhFI2j8PCx7jHvicJN1qg9CwYuZKrYb281kqZhXHHCW9qXMC4xkNhvfDBzzyxsTow=s32-c-k"
+                          }
+                        ]
+                      },
+                      "tooltip": "新會員",
+                      "accessibility": {
+                        "accessibilityData": {
+                          "label": "新會員"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "contextMenuEndpoint": {
+                  "commandMetadata": {
+                    "webCommandMetadata": {
+                      "ignoreNavigation": true
+                    }
+                  },
+                  "liveChatItemContextMenuEndpoint": {
+                    "params": "Q2g0S0hBb2FRMDlZYTNwMlIyUTBaa1ZEUmxGVFNtZG5iMlJMTTNkRlVWRWFLU29uQ2hoVlEwMTNSMGhTTUVKVVduVk1jMjFxV1Y5T1ZEVlFkMmNTQzNwdVpYbGlRelZ4TTBZd0lBRW9CRElhQ2hoVlF6ZDJjMlpTVDB4c1FuQkVUMWx1TkRGSE4ydDBNRkUlM0Q="
+                  }
+                },
+                "contextMenuAccessibility": {
+                  "accessibilityData": {
+                    "label": "留言動作"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "videoOffsetTimeMsec": "13658027"
+    }
+  }

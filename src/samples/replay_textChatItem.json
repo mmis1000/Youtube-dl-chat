@@ -1,0 +1,61 @@
+{
+    "replayChatItemAction": {
+      "actions": [
+        {
+          "addChatItemAction": {
+            "item": {
+              "liveChatTextMessageRenderer": {
+                "message": {
+                  "runs": [
+                    {
+                      "text": "there was nothing in the chest pain "
+                    }
+                  ]
+                },
+                "authorName": {
+                  "simpleText": "Daoist Awe"
+                },
+                "authorPhoto": {
+                  "thumbnails": [
+                    {
+                      "url": "https://yt4.ggpht.com/ytc/AKedOLSDsX7DBWrxWeBadLAlGxPP6IRBvctlJHvNsBEF=s32-c-k-c0x00ffffff-no-rj",
+                      "width": 32,
+                      "height": 32
+                    },
+                    {
+                      "url": "https://yt4.ggpht.com/ytc/AKedOLSDsX7DBWrxWeBadLAlGxPP6IRBvctlJHvNsBEF=s64-c-k-c0x00ffffff-no-rj",
+                      "width": 64,
+                      "height": 64
+                    }
+                  ]
+                },
+                "contextMenuEndpoint": {
+                  "commandMetadata": {
+                    "webCommandMetadata": {
+                      "ignoreNavigation": true
+                    }
+                  },
+                  "liveChatItemContextMenuEndpoint": {
+                    "params": "Q2pzS09Rb2FRMGwxUTJkMGNXVTBaa1ZEUm1SblFYSlJXV1J1WjFsT1lXY1NHME5RWm0xZllubGxOR1pGUTBaWldVVnJRVzlrVXpGblNHdG5NQm9wS2ljS0dGVkRUWGRIU0ZJd1FsUmFkVXh6YldwWlgwNVVOVkIzWnhJTGVtNWxlV0pETlhFelJqQWdBU2dFTWhvS0dGVkRSbU41UVhGYU1ISlhWbGx4VW1zek9ESnlhazlXUVElM0QlM0Q="
+                  }
+                },
+                "id": "CjkKGkNJdUNndHFlNGZFQ0ZkZ0FyUVlkbmdZTmFnEhtDUGZtX2J5ZTRmRUNGWVlFa0FvZFMxZ0hrZzA%3D",
+                "timestampUsec": "1626220299059508",
+                "authorExternalChannelId": "UCFcyAqZ0rWVYqRk382rjOVA",
+                "contextMenuAccessibility": {
+                  "accessibilityData": {
+                    "label": "留言動作"
+                  }
+                },
+                "timestampText": {
+                  "simpleText": "3:51:16"
+                }
+              }
+            },
+            "clientId": "CPfm_bye4fECFYYEkAodS1gHkg0"
+          }
+        }
+      ],
+      "videoOffsetTimeMsec": "13876963"
+    }
+  }
