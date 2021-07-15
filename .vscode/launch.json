@@ -4,6 +4,8 @@
     // 如需詳細資訊，請瀏覽: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
+
         
         {
             "name": "Fetch chat",
@@ -31,6 +33,19 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
-        }
+        },
+        {
+            "name": "Fetch chat live",
+            "request": "launch",
+            "args": ["https://www.youtube.com/watch?v=nbb6VJps8w8"],
+            "program": "${workspaceFolder}/src/cli/fetchChatLive.ts",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
     ]
 }

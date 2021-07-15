@@ -10,7 +10,8 @@ const config = {
     target: 'node',
     entry: {
         fetchChatAll: './src/cli/fetchChatAll.ts',
-        fetchChatLive: './src/cli/fetchChatLive.ts'
+        fetchChatLive: './src/cli/fetchChatLive.ts',
+        convertToHumanReadable: './src/cli/fetchChatLive.ts'
     },
     output: {
         path: path.resolve(__dirname, 'dist-bundled'),
@@ -48,7 +49,7 @@ const config = {
         providedExports: true,
         minimize: false,
     },
-};
+}
 
 module.exports = () => {
     if (isProduction) {

@@ -74,7 +74,7 @@ type TextRunEmoji = NarrowableKeyedItems<TextRunKeys, {
     isCustomEmoji: boolean
   }
 }>
-type TextRuns = TextRunText | TextRunEmoji
+export type TextRuns = TextRunText | TextRunEmoji
 
 // Chat item renderer
 
@@ -113,7 +113,7 @@ type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     purchaseAmountText: {
       simpleText: string
     },
-    message: {
+    message?: {
       runs: TextRuns[]
     }
   }
@@ -139,7 +139,7 @@ type ViewerEngagementMessageRenderer = NarrowableKeyedItems<ChatItemRendererKeys
   liveChatViewerEngagementMessageRenderer: {}
 }>
 
-type ChatItemRenderers = 
+export type ChatItemRenderers = 
   TextChatItemRenderer
   | PaidChatItemRenderer
   | MemberChatItemRenderer
