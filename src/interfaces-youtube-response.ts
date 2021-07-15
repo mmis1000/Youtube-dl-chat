@@ -151,6 +151,8 @@ type ChatActionKeys =
   'replayChatItemAction'
   | 'addLiveChatTickerItemAction'
   | 'addChatItemAction'
+  | 'markChatItemAsDeletedAction'
+  | 'markChatItemsByAuthorAsDeletedAction'
 
 type AddLiveChatTickerItemAction = NarrowableKeyedItems<ChatActionKeys, {
   addLiveChatTickerItemAction: {}
@@ -162,7 +164,19 @@ type AddChatItemAction = NarrowableKeyedItems<ChatActionKeys, {
   }
 }>
 
-type ReplayAbleChatActions = AddLiveChatTickerItemAction | AddChatItemAction
+type MarkChatItemAsDeletedAction = NarrowableKeyedItems<ChatActionKeys, {
+  markChatItemAsDeletedAction: {}
+}>
+
+type MarkChatItemsByAuthorAsDeletedAction = NarrowableKeyedItems<ChatActionKeys, {
+  markChatItemsByAuthorAsDeletedAction: {}
+}>
+
+type ReplayAbleChatActions =
+  AddLiveChatTickerItemAction
+  | AddChatItemAction
+  | MarkChatItemAsDeletedAction
+  | MarkChatItemsByAuthorAsDeletedAction
 
 export type ReplayChatItemAction = NarrowableKeyedItems<ChatActionKeys, {
   replayChatItemAction: {

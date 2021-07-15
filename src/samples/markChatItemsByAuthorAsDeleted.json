@@ -1,0 +1,12 @@
+{
+  "markChatItemsByAuthorAsDeletedAction": {
+    "deletedStateMessage": {
+      "runs": [
+        {
+          "text": "[這則訊息已被刪除]"
+        }
+      ]
+    },
+    "externalChannelId": "UCA43d_68SCPS4Rx01ZSnVAw"
+  }
+}

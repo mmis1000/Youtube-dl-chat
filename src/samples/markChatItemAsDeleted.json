@@ -1,0 +1,12 @@
+{
+  "markChatItemAsDeletedAction": {
+    "deletedStateMessage": {
+      "runs": [
+        {
+          "text": "[這則訊息已被撤回]"
+        }
+      ]
+    },
+    "targetItemId": "CkUKGkNQN0hpYXk0NVBFQ0ZkZ0FyUVlkRm5rS2NnEidDS2JqanN1MzVQRUNGVzVRaFFvZFVjZ0tndzE2MjYzMzAyNTk0NTU%3D"
+  }
+}
