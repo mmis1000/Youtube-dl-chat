@@ -193,7 +193,7 @@ export interface VideoData {
   parsedInitialData: {
     contents: {
       twoColumnWatchNextResults: {
-        conversationBar: {
+        conversationBar?: {
           liveChatRenderer: {
             continuations: ReloadContinuation[]
           }
