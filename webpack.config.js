@@ -11,7 +11,7 @@ const config = {
     entry: {
         fetchChatAll: './src/cli/fetchChatAll.ts',
         fetchChatLive: './src/cli/fetchChatLive.ts',
-        convertToHumanReadable: './src/cli/fetchChatLive.ts'
+        convertToHumanReadable: './src/cli/convertToHumanReadable.ts',
     },
     output: {
         path: path.resolve(__dirname, 'dist-bundled'),
