@@ -1,9 +1,9 @@
 const url = process.argv[2]
 
-import { getPage, ReplayChatClient } from '../comment-client'
+import { getPage, LiveChatClient } from '../comment-client'
 
 async function main () {
-    const client = new ReplayChatClient()
+    const client = new LiveChatClient()
 
     client.on('progress', it => {
         for (let v of it) {

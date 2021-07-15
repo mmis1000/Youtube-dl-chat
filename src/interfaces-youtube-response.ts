@@ -18,14 +18,14 @@ type ContinuationKeys =
   }
 }>
 
-type LiveContinuation = NarrowableKeyedItems<ContinuationKeys, {
+export type LiveContinuation = NarrowableKeyedItems<ContinuationKeys, {
   timedContinuationData: {
     timeoutMs: number,
     continuation: string
   }
 }>
 
-type LiveContinuation2 = NarrowableKeyedItems<ContinuationKeys, {
+export type LiveContinuation2 = NarrowableKeyedItems<ContinuationKeys, {
   invalidationContinuationData: {
     timeoutMs: number,
     continuation: string

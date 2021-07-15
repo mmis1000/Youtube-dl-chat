@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import EventEmitter from "events";
-import { Actions, ChatData, ChatXhrData, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
+import { Actions, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
 import { getURLVideoID } from "./youtube-dl-utils";
 
@@ -58,7 +58,8 @@ export async function getChatXhr(
   innerTubeContext: Record<string, unknown>,
   continuation: string,
   headers: Record<string, string>,
-  timeOffset: number = 0
+  timeOffset: number = 0,
+  isInvalidationTimeoutRequest: boolean = false
 ): Promise<ChatXhrData> {
   const url = isLive
     ? `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${innerTubeKey}`
@@ -72,9 +73,13 @@ export async function getChatXhr(
     adSignalsInfo: {
         params: []
     },
-    currentPlayerState: {
+    ...(isLive ? {
+      isInvalidationTimeoutRequest: String(isInvalidationTimeoutRequest)
+    } : {
+      currentPlayerState: {
         playerOffsetMs: String(timeOffset)
-    }
+      }
+    })
   }
 
   const res = await fetch(
@@ -121,16 +126,13 @@ export class ReplayChatClient extends EventEmitter {
 
     return res
   }
-  async start (url: string) {
+
+  async start (pageData: VideoData) {
     if (this.state !== ClientState.STOPPED) {
       throw new Error('client is already running')
     }
 
-    this.state = ClientState.RUNNING
-
     try {
-      const pageData = await getPage(url, this.headers)
-
       if (pageData.parsedInitialPlayerResponse.videoDetails.isLive) {
         throw new Error('it is a live')
       }
@@ -178,6 +180,130 @@ export class ReplayChatClient extends EventEmitter {
         lastTime = Number((actions[actions.length - 1] as ReplayChatItemAction).replayChatItemAction.videoOffsetTimeMsec)
 
         await new Promise(r => setTimeout(r, this.fetchInterval))
+      }
+    } finally {
+      this.state = ClientState.STOPPED
+      this.emit('finish')
+    }
+  }
+
+  on(ev: 'progress', cb: (list: Actions[]) => void): this
+  on(ev: 'finish', cb: () => void): this
+  on(ev: string, cb: (...args: any[]) => any): this {
+    return super.on(ev, cb)
+  }
+}
+
+export class LiveChatClient extends EventEmitter {
+  state = ClientState.STOPPED
+  lastPullResult = true // The first is always a burst regardless of whether is has content
+
+  private readonly maxBursts = 2
+  // The first always burst
+  private remainingBursts = 1
+  private readonly burstFetchInterval = 1000
+
+  constructor (private headers: Record<string, string> = {}) {
+    super()
+  }
+
+  private getPageContinuation(data: VideoData): string {
+    const res = select(data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations, 'reloadContinuationData')?.continuation
+  
+    if (res == null) throw new Error('no token')
+
+    return res
+  }
+
+  private getLiveChatContinuation(data: ChatData): LiveContinuation | LiveContinuation2 {
+    return this._getLiveChatContinuation(data.parsedInitialData.continuationContents.liveChatContinuation.continuations)
+  }
+
+  private getLiveChatXhrContinuation(data: ChatXhrData): LiveContinuation | LiveContinuation2 {
+    return this._getLiveChatContinuation(data.continuationContents.liveChatContinuation.continuations)
+  }
+
+  private _getLiveChatContinuation(c: Continuations[]):  LiveContinuation | LiveContinuation2 {
+    const res = select(c, 'invalidationContinuationData')
+    const res2 = select(c, 'timedContinuationData')
+
+    if (res) {
+      return { 'invalidationContinuationData': res}
+    }
+
+    if (res2) {
+      return { 'timedContinuationData': res2 }
+    }
+
+    throw new Error('no token')
+  }
+
+  async start (pageData: VideoData) {
+    if (this.state !== ClientState.STOPPED) {
+      throw new Error('client is already running')
+    }
+
+    try {
+      if (!pageData.parsedInitialPlayerResponse.videoDetails.isLive) {
+        throw new Error('it is not a live')
+      }
+
+
+      const chatPageResponse = await getChat(
+        true,
+        this.getPageContinuation(pageData),
+        this.headers
+      )
+
+      this.emit('progress', chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions || [])
+
+      let currentContinuation = this.getLiveChatContinuation(chatPageResponse)
+      
+      const getTokenAndDelay = (c: LiveContinuation | LiveContinuation2): [isInvalidation: boolean, delay: number, token: string] => {
+        if (c.invalidationContinuationData) {
+          return [true, Number(c.invalidationContinuationData.timeoutMs), c.invalidationContinuationData.continuation]
+        } else {
+          return [true, Number(c.timedContinuationData.timeoutMs), c.timedContinuationData.continuation]
+        }
+      }
+
+      let currentContinuationToken = getTokenAndDelay(currentContinuation)[2]
+      let isInvalidationTimeoutRequest = false
+      while (true) {
+        const data = await getChatXhr(
+          true,
+          chatPageResponse.parsedYtCfg.INNERTUBE_API_KEY,
+          chatPageResponse.parsedYtCfg.INNERTUBE_CONTEXT,
+          currentContinuationToken,
+          this.headers,
+          0,
+          isInvalidationTimeoutRequest
+        )
+
+        const actions = data.continuationContents.liveChatContinuation.actions || []
+
+        this.emit('progress', actions)
+
+        const nextContinuation = this.getLiveChatXhrContinuation(data)
+        if (nextContinuation == null) throw new Error('no continuation')
+
+        const [allowBurst, timeout, token] = getTokenAndDelay(nextContinuation)
+
+        if (allowBurst) {
+          if (actions.length > 0) {
+            this.remainingBursts = this.maxBursts
+          }
+        }
+
+        isInvalidationTimeoutRequest = allowBurst && this.remainingBursts > 0
+        currentContinuationToken = token
+
+        if (allowBurst && this.remainingBursts > 0) {
+          this.remainingBursts--
+          await new Promise(r => setTimeout(r, this.burstFetchInterval))
+        } else {
+          await new Promise(r => setTimeout(r, timeout))
+        }
       }
     } finally {
       this.state = ClientState.STOPPED
