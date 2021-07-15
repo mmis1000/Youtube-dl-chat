@@ -3,6 +3,7 @@ import EventEmitter from "events";
 import { Actions, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
 import { getURLVideoID } from "./youtube-dl-utils";
+import { assert } from 'console';
 
 const select = <T extends {}, U extends keyof T>(arr: T[], key: U): Pick<T, U>[U] | undefined => {
   return arr.find(it => it[key] != null)?.[key] as unknown as Pick<T, U>[U] | undefined
@@ -27,6 +28,8 @@ export async function getPage(url: string, headers: Record<string, string>): Pro
     }
   )
 
+  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
+
   const text = await res.text()
 
   return parseVideo(text)
@@ -46,6 +49,8 @@ export async function getChat(isLive: boolean, continuation: string, headers: Re
       }
     }
   )
+
+  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
 
   const text = await res.text()
 
@@ -94,6 +99,8 @@ export async function getChatXhr(
       method: "POST"
     }
   )
+
+  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
 
   return res.json()
 }
@@ -164,7 +171,7 @@ export class ReplayChatClient extends EventEmitter {
           lastTime
         )
 
-        const actions = data.continuationContents.liveChatContinuation.actions
+        const actions = data.continuationContents!.liveChatContinuation.actions
 
         if (!actions) {
           return
@@ -172,7 +179,7 @@ export class ReplayChatClient extends EventEmitter {
 
         this.emit('progress', actions)
 
-        const nextContinuation = select(data.continuationContents.liveChatContinuation.continuations, 'liveChatReplayContinuationData')?.continuation
+        const nextContinuation = select(data.continuationContents!.liveChatContinuation.continuations, 'liveChatReplayContinuationData')?.continuation
 
         if (nextContinuation == null) throw new Error('no continuation')
 
@@ -219,7 +226,11 @@ export class LiveChatClient extends EventEmitter {
     return this._getLiveChatContinuation(data.parsedInitialData.continuationContents.liveChatContinuation.continuations)
   }
 
-  private getLiveChatXhrContinuation(data: ChatXhrData): LiveContinuation | LiveContinuation2 {
+  private getLiveChatXhrContinuation(data: ChatXhrData): LiveContinuation | LiveContinuation2  | null {
+    if (!data.continuationContents) {
+      return null
+    }
+  
     return this._getLiveChatContinuation(data.continuationContents.liveChatContinuation.continuations)
   }
 
@@ -280,12 +291,16 @@ export class LiveChatClient extends EventEmitter {
           isInvalidationTimeoutRequest
         )
 
-        const actions = data.continuationContents.liveChatContinuation.actions || []
+        const actions = data.continuationContents?.liveChatContinuation.actions || []
 
         this.emit('progress', actions)
 
         const nextContinuation = this.getLiveChatXhrContinuation(data)
-        if (nextContinuation == null) throw new Error('no continuation')
+        if (nextContinuation == null) {
+          this.emit('finish')
+          return
+          // throw new Error('no continuation')
+        }
 
         const [allowBurst, timeout, token] = getTokenAndDelay(nextContinuation)
 

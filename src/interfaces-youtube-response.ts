@@ -218,7 +218,7 @@ export interface ChatData {
 
 // Chat room xhr
 export interface ChatXhrData {
-  continuationContents: {
+  continuationContents?: {
     liveChatContinuation: {
       continuations: Continuations[]
       actions?: Actions[]
