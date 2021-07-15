@@ -120,7 +120,7 @@ export class ReplayChatClient extends EventEmitter {
 
   private getPageContinuation(data: VideoData): string {
     if (data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar == null) {
-      throw new Error('this page didn\'t seems have a chat room')
+      throw new Error('this page didn\'t seem to have a chat room')
     }
 
     const res = select(data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations, 'reloadContinuationData')?.continuation
@@ -220,7 +220,7 @@ export class LiveChatClient extends EventEmitter {
 
   private getPageContinuation(data: VideoData): string {
     if (data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar == null) {
-      throw new Error('this page didn\'t seems have a chat room')
+      throw new Error('this page didn\'t seem to have a chat room')
     }
 
     const res = select(data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations, 'reloadContinuationData')?.continuation

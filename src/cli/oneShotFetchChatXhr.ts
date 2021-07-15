@@ -20,6 +20,10 @@ async function main () {
 
     const parsedPage = parseVideo(text)
     
+    if (parsedPage.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar == null) {
+        throw new Error('this page didn\'t seem to have a chat room')
+    }
+
     const continuations = parsedPage.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations
 
     const reloadToken = continuations.find(it => it.reloadContinuationData !== undefined)
