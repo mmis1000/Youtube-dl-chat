@@ -1,19 +1,30 @@
 {
   "name": "youtube-comment-downloader",
-  "version": "1.0.0",
+  "sideEffects": false,
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode=production --node-env=production",
+    "build:dev": "webpack --mode=development",
+    "build:prod": "webpack --mode=production --node-env=production",
+    "watch": "webpack --watch",
+    "build-cjs": "tsc",
+    "watch-cjs": "tsc --watch"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@types/node": "^16.3.1",
     "@types/node-fetch": "^2.5.11",
-    "typescript": "^4.3.5"
+    "@webpack-cli/generators": "^2.2.0",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.5",
+    "webpack": "^5.44.0",
+    "webpack-cli": "^4.7.2"
   }
 }

@@ -3,5 +3,6 @@
         "activityBar.background": "#2F2F0A",
         "titleBar.activeBackground": "#42420E",
         "titleBar.activeForeground": "#FBFBEE"
-    }
+    },
+    "licenser.license": "MIT"
 }

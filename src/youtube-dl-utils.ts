@@ -1,3 +1,7 @@
+/**
+ * From https://github.com/fent/node-ytdl-core
+ */
+
 import url from 'url';
 
 declare var exports: never
