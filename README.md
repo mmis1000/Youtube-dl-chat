@@ -1,3 +1,3 @@
-# Youtube DL Comment
+# Youtube DL Chat
 
-A util for downloading comments from youtube
+A util for downloading live chats from youtube
