@@ -52,7 +52,7 @@ const rendererToTime = (item: ChatItemRenderers) => {
 const rendererToText = (item: ChatItemRenderers) => {
   if (item.liveChatTextMessageRenderer) {
     const renderer = item.liveChatTextMessageRenderer
-    const author = renderer.authorName.simpleText
+    const author = renderer.authorName?.simpleText ?? '<unnamed>'
     const message = runsToText(renderer.message.runs)
 
     return `${author}: ${message}`
@@ -67,7 +67,7 @@ const rendererToText = (item: ChatItemRenderers) => {
 
   if (item.liveChatPaidMessageRenderer) {
     const renderer = item.liveChatPaidMessageRenderer
-    const author = renderer.authorName.simpleText
+    const author = renderer.authorName?.simpleText ?? '<unnamed>'
     const amount = renderer.purchaseAmountText.simpleText
 
     const message = renderer.message

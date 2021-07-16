@@ -91,7 +91,7 @@ type TextChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     timestampText?: {
       simpleText: string
     }
-    authorName: {
+    authorName?: {
       simpleText: string
     },
     message: {
@@ -107,7 +107,7 @@ type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     timestampText?: {
       simpleText: string
     }
-    authorName: {
+    authorName?: {
       simpleText: string
     },
     purchaseAmountText: {
@@ -126,7 +126,7 @@ type MemberChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     timestampText?: {
       simpleText: string
     },
-    authorName: {
+    authorName?: {
       simpleText: string
     },
     headerSubtext: {
