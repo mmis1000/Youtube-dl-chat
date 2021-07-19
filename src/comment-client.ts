@@ -145,6 +145,14 @@ export class ReplayChatClient extends EventEmitter {
   }
 
   async start (pageData: VideoData) {
+    try {
+      await this.start_(pageData)
+    } catch (err) {
+      this.emit('error', err)
+    }
+  }
+
+  private async start_ (pageData: VideoData) {
     if (this.state !== ClientState.STOPPED) {
       throw new Error('client is already running')
     }
@@ -204,6 +212,7 @@ export class ReplayChatClient extends EventEmitter {
     }
   }
 
+  on(ev: 'error', cb: (err: Error) => void): this
   on(ev: 'progress', cb: (list: Actions[]) => void): this
   on(ev: 'finish', cb: () => void): this
   on(ev: string, cb: (...args: any[]) => any): this {
@@ -264,6 +273,14 @@ export class LiveChatClient extends EventEmitter {
   }
 
   async start (pageData: VideoData) {
+    try {
+      await this.start_(pageData)
+    } catch (err) {
+      this.emit('error', err)
+    }
+  }
+
+  private async start_ (pageData: VideoData) {
     if (this.state !== ClientState.STOPPED) {
       throw new Error('client is already running')
     }
@@ -339,6 +356,7 @@ export class LiveChatClient extends EventEmitter {
     }
   }
 
+  on(ev: 'error', cb: (err: Error) => void): this
   on(ev: 'progress', cb: (list: Actions[]) => void): this
   on(ev: 'finish', cb: () => void): this
   on(ev: string, cb: (...args: any[]) => any): this {
