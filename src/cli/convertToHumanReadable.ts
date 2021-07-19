@@ -2,6 +2,7 @@ import { createReadStream } from 'fs';
 import { ReadlineStream } from '../readline-stream';
 import type { Actions, ChatItemRenderers, TextRuns } from '../interfaces-youtube-response';
 import type { Readable } from 'stream';
+import { inspect } from 'util';
 
 const filename = process.argv[2]
 
@@ -86,33 +87,40 @@ lineStream.on('data', (l: string) => {
   try {
     o = JSON.parse(l)
   } catch (err) {
-    console.log('[BAD LINE]' + l)
+    console.error('[BAD LINE]' + l)
     return
   }
 
-  if (o.addChatItemAction) {
-    const item = o.addChatItemAction.item
+  
+  try {
+    if (o.addChatItemAction) {
+      const item = o.addChatItemAction.item
 
-    const time = rendererToTime(item)
-    const message = rendererToText(item)
+      const time = rendererToTime(item)
+      const message = rendererToText(item)
 
-    if (time && message) {
-      console.log(`${time} ${message}`)
+      if (time && message) {
+        console.log(`${time} ${message}`)
+      }
     }
-  }
 
-  if (o.replayChatItemAction) {
-    for (let o1 of o.replayChatItemAction.actions) {
-      if (o1.addChatItemAction) {
-        const item = o1.addChatItemAction.item
+    if (o.replayChatItemAction) {
+      for (let o1 of o.replayChatItemAction.actions) {
+        if (o1.addChatItemAction) {
+          const item = o1.addChatItemAction.item
 
-        const time = rendererToTime(item)
-        const message = rendererToText(item)
+          const time = rendererToTime(item)
+          const message = rendererToText(item)
 
-        if (time && message) {
-          console.log(`${time} ${message}`)
+          if (time && message) {
+            console.log(`${time} ${message}`)
+          }
         }
       }
     }
+  } catch (err) {
+    console.error('Something went wrong at line')
+    console.error(l)
+    console.error(inspect(err))
   }
 })

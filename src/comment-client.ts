@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+import fetch, { Response } from 'node-fetch'
 import EventEmitter from "events";
 import { Actions, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
@@ -7,6 +7,12 @@ import { assert } from 'console';
 
 const select = <T extends {}, U extends keyof T>(arr: T[], key: U): Pick<T, U>[U] | undefined => {
   return arr.find(it => it[key] != null)?.[key] as unknown as Pick<T, U>[U] | undefined
+}
+
+const assertResponseOk = (res: Response) => {
+  assert(res.status !== 403, 'The video has been private')
+  assert(res.status !== 404, 'The video has been deleted')
+  assert(res.status >= 200 && res.status < 300, `Must not get an error status code ${res.status}`)
 }
 
 const DEFAULT_HEADERS = Object.freeze({
@@ -28,7 +34,7 @@ export async function getPage(url: string, headers: Record<string, string>): Pro
     }
   )
 
-  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
+  assertResponseOk(res)
 
   const text = await res.text()
 
@@ -50,7 +56,7 @@ export async function getChat(isLive: boolean, continuation: string, headers: Re
     }
   )
 
-  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
+  assertResponseOk(res)
 
   const text = await res.text()
 
@@ -100,7 +106,7 @@ export async function getChatXhr(
     }
   )
 
-  assert(res.status >= 200 && res.status < 300, 'Must not get an error')
+  assertResponseOk(res)
 
   return res.json()
 }
@@ -125,7 +131,7 @@ export class ReplayChatClient extends EventEmitter {
 
     const res = select(data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations, 'reloadContinuationData')?.continuation
   
-    if (res == null) throw new Error('no token')
+    if (res == null) throw new Error("Page don't have a continuation token")
 
     return res
   }
@@ -133,7 +139,7 @@ export class ReplayChatClient extends EventEmitter {
   private getChatContinuation(data: ChatData): string {
     const res = select(data.parsedInitialData.continuationContents.liveChatContinuation.continuations, 'liveChatReplayContinuationData')?.continuation
   
-    if (res == null) throw new Error('no token')
+    if (res == null) throw new Error("Page don't have a continuation token")
 
     return res
   }
@@ -185,7 +191,7 @@ export class ReplayChatClient extends EventEmitter {
 
         const nextContinuation = select(data.continuationContents!.liveChatContinuation.continuations, 'liveChatReplayContinuationData')?.continuation
 
-        if (nextContinuation == null) throw new Error('no continuation')
+        if (nextContinuation == null) throw new Error("Response don't have a continuation token")
 
         currentContinuation = nextContinuation
         lastTime = Number((actions[actions.length - 1] as ReplayChatItemAction).replayChatItemAction.videoOffsetTimeMsec)
@@ -225,7 +231,7 @@ export class LiveChatClient extends EventEmitter {
 
     const res = select(data.parsedInitialData.contents.twoColumnWatchNextResults.conversationBar.liveChatRenderer.continuations, 'reloadContinuationData')?.continuation
   
-    if (res == null) throw new Error('no token')
+    if (res == null) throw new Error("Page don't have a continuation token")
 
     return res
   }
@@ -254,7 +260,7 @@ export class LiveChatClient extends EventEmitter {
       return { 'timedContinuationData': res2 }
     }
 
-    throw new Error('no token')
+    throw new Error("Page don't have a continuation token")
   }
 
   async start (pageData: VideoData) {
@@ -307,7 +313,6 @@ export class LiveChatClient extends EventEmitter {
         if (nextContinuation == null) {
           this.emit('finish')
           return
-          // throw new Error('no continuation')
         }
 
         const [allowBurst, timeout, token] = getTokenAndDelay(nextContinuation)
