@@ -111,15 +111,15 @@ async function download(url: string, outputDir: string, withAssets: boolean) {
   })
 
   client.on('finish', () => {
-    console.log('dump finished')
+    console.log('Dump finished')
   })
 
   client.on('error', (err) => {
-    console.error('dump interrupted due to')
+    console.error('Dump interrupted due to')
     console.error(inspect(err))
   })
 
-  console.log('starts to dump chat')
+  console.log(`Start to dump chat (${withAssets ? 'with' : 'without'} assets)`)
 
   client.start(info)
 }
