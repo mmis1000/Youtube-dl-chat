@@ -1,10 +1,17 @@
 # Youtube DL Chat
 
-A util for downloading live chats from youtube
+A downloader for downloading live chats from youtube (either live or archive)
 
 ## Usage
 
-### Dump archive chat
+### The full downloader
+
+```bash
+# For detail, read the build in description
+./youtube-chat-dl --help
+```
+
+### Dump archive chat only
 
 download the chat in a `one json per line` format
 
@@ -12,7 +19,7 @@ download the chat in a `one json per line` format
 ./fetchChatAll.js https://www.youtube.com/watch?v=XXXXXXXX > chat.jsonl
 ```
 
-### Tail live chat
+### Tail live chat only
 
 Download the chat in a `one json per line` format.  
 The dump contains all information required to reconstruct the chat room.
@@ -21,7 +28,7 @@ The dump contains all information required to reconstruct the chat room.
 ./fetchChatLive.js https://www.youtube.com/watch?v=XXXXXXXX > chat.jsonl
 ```
 
-### Convert dumped chat to human readable format
+### Convert dumped chat to human readable format only
 
 ```bash
 # from dump

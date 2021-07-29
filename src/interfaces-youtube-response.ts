@@ -1,3 +1,5 @@
+import { string } from "yargs"
+
 type NarrowableKeyedItems<Key extends string, Field extends { [PKey in Key]?: unknown }> = 
   {
     [K in Exclude<Key, keyof Field>]?: never
@@ -94,6 +96,13 @@ type TextChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     authorName?: {
       simpleText: string
     },
+    authorPhoto?: {
+      thumbnails: Array<{
+        url: string,
+        height: number,
+        width: number
+      }>
+    },
     message: {
       runs: TextRuns[]
     }
@@ -109,6 +118,13 @@ type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     }
     authorName?: {
       simpleText: string
+    },
+    authorPhoto?: {
+      thumbnails: Array<{
+        url: string,
+        height: number,
+        width: number
+      }>
     },
     purchaseAmountText: {
       simpleText: string
@@ -128,6 +144,13 @@ type MemberChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     },
     authorName?: {
       simpleText: string
+    },
+    authorPhoto?: {
+      thumbnails: Array<{
+        url: string,
+        height: number,
+        width: number
+      }>
     },
     headerSubtext: {
       runs: TextRuns[]
@@ -158,7 +181,7 @@ type AddLiveChatTickerItemAction = NarrowableKeyedItems<ChatActionKeys, {
   addLiveChatTickerItemAction: {}
 }>
 
-type AddChatItemAction = NarrowableKeyedItems<ChatActionKeys, {
+export type AddChatItemAction = NarrowableKeyedItems<ChatActionKeys, {
   addChatItemAction: {
     item: ChatItemRenderers
   }
@@ -172,7 +195,7 @@ type MarkChatItemsByAuthorAsDeletedAction = NarrowableKeyedItems<ChatActionKeys,
   markChatItemsByAuthorAsDeletedAction: {}
 }>
 
-type ReplayAbleChatActions =
+export type ReplayAbleChatActions =
   AddLiveChatTickerItemAction
   | AddChatItemAction
   | MarkChatItemAsDeletedAction
@@ -203,6 +226,8 @@ export interface VideoData {
   },
   parsedInitialPlayerResponse: {
     videoDetails: {
+      videoId: string
+      title: string
       isLive?: boolean
       isLiveContent?: boolean
     }

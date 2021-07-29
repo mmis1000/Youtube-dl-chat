@@ -12,8 +12,10 @@ const config = {
         fetchChatAll: './src/cli/fetchChatAll.ts',
         fetchChatLive: './src/cli/fetchChatLive.ts',
         convertToHumanReadable: './src/cli/convertToHumanReadable.ts',
+        'youtube-chat-dl': './src/cli/youtubeChatDl.ts'
     },
     output: {
+        filename: '[name]',
         path: path.resolve(__dirname, 'dist-bundled'),
     },
     plugins: [

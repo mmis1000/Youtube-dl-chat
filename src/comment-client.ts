@@ -1,6 +1,6 @@
 import fetch, { Response } from 'node-fetch'
 import EventEmitter from "events";
-import { Actions, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
+import { Actions, AddChatItemAction, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayAbleChatActions, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
 import { getURLVideoID } from "./youtube-dl-utils";
 import { assert } from 'console';
@@ -116,12 +116,98 @@ enum ClientState {
   STOPPED
 }
 
+interface ClientOptions {
+  imageDirectory?: string | null,
+  headers?: Record<string, string>
+  imageDownloader?: (imageURL: string, imageDirectory: string) => Promise<string>
+}
+
+const extractImages = (actions: Actions[]): string[] => {
+  const images: string[] = []
+
+  const extractAddChatItemActions = (actions: AddChatItemAction[]) => {
+    for (const action of actions) {
+      const i = action.addChatItemAction.item
+
+      const authorPhoto = i.liveChatMembershipItemRenderer?.authorPhoto
+        ?? i.liveChatPaidMessageRenderer?.authorPhoto
+        ?? i.liveChatTextMessageRenderer?.authorPhoto
+
+      if (authorPhoto != null) {
+        authorPhoto.thumbnails.forEach(it => images.push(it.url))
+      }
+
+      const text = i.liveChatPaidMessageRenderer?.message?.runs
+        ?? i.liveChatTextMessageRenderer?.message?.runs
+        ?? i.liveChatMembershipItemRenderer?.headerSubtext.runs
+      
+      if (text != null) {
+        for (let seg of text) {
+          if (seg.emoji) {
+            seg.emoji.image.thumbnails.forEach(it => images.push(it.url))
+          }
+        }
+      }
+    }
+  }
+
+  for (const action of actions) {
+    if (action.replayChatItemAction) {
+      extractAddChatItemActions(
+        action.replayChatItemAction.actions
+        .filter(
+          (it => it.addChatItemAction != null) as (it: ReplayAbleChatActions) => it is AddChatItemAction)
+        )
+    } else if (action.addChatItemAction) {
+      extractAddChatItemActions([action])
+    }
+  }
+
+  return images
+}
+
+
+export const dummyDownloadImage = async (imageURL: string, imageDirectory: string): Promise<string> => {
+  return ''
+}
+
 export class ReplayChatClient extends EventEmitter {
   state = ClientState.STOPPED
   fetchInterval = 1000
 
-  constructor (private headers: Record<string, string> = {}) {
+  downloadImage: (imageURL: string, imageDirectory: string) => Promise<string>
+  downloadedImages = new Map<string, Promise<string>>()
+
+  constructor (private options: ClientOptions = {}) {
     super()
+    this.downloadImage = options.imageDownloader ?? dummyDownloadImage
+  }
+
+  async processActions (actions: Actions[]) {
+    const pendingDownloads: Promise<string>[] = []
+
+    if (this.options.imageDirectory != null) {
+      const images = extractImages(actions)
+
+      for (let image of images) {
+        if (!this.downloadedImages.has(image)) {
+          const p = this.downloadImage(image, this.options.imageDirectory)
+            .then(path => {
+              this.emit('assets_progress', image, path)
+              return path
+            })
+            .catch((err: Error) => {
+              this.emit('assets_error', image, err)
+              throw err
+            })
+          pendingDownloads.push(p)
+          this.downloadedImages.set(image, p)
+        }
+      }
+    }
+
+    this.emit('progress', actions)
+    return Promise.allSettled(pendingDownloads)
   }
 
   private getPageContinuation(data: VideoData): string {
@@ -166,14 +252,14 @@ export class ReplayChatClient extends EventEmitter {
       const chatPageResponse = await getChat(
         false,
         this.getPageContinuation(pageData),
-        this.headers
+        this.options.headers ?? {}
       )
 
       if (chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions == null) {
         return
       }
 
-      this.emit('progress', chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions)
+      this.processActions(chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions)
 
       let currentContinuation = this.getChatContinuation(chatPageResponse)
 
@@ -185,7 +271,7 @@ export class ReplayChatClient extends EventEmitter {
           chatPageResponse.parsedYtCfg.INNERTUBE_API_KEY,
           chatPageResponse.parsedYtCfg.INNERTUBE_CONTEXT,
           currentContinuation,
-          this.headers,
+          this.options.headers ?? {},
           lastTime
         )
 
@@ -195,7 +281,7 @@ export class ReplayChatClient extends EventEmitter {
           return
         }
 
-        this.emit('progress', actions)
+        await this.processActions(actions)
 
         const nextContinuation = select(data.continuationContents!.liveChatContinuation.continuations, 'liveChatReplayContinuationData')?.continuation
 
@@ -214,6 +300,8 @@ export class ReplayChatClient extends EventEmitter {
 
   on(ev: 'error', cb: (err: Error) => void): this
   on(ev: 'progress', cb: (list: Actions[]) => void): this
+  on(ev: 'assets_error', cb: (url: string, err: Error) => void): this
+  on(ev: 'assets_progress', cb: (url: string, file_path: string) => void): this
   on(ev: 'finish', cb: () => void): this
   on(ev: string, cb: (...args: any[]) => any): this {
     return super.on(ev, cb)
@@ -229,8 +317,39 @@ export class LiveChatClient extends EventEmitter {
   private remainingBursts = 1
   private readonly burstFetchInterval = 1000
 
-  constructor (private headers: Record<string, string> = {}) {
+  downloadImage: (imageURL: string, imageDirectory: string) => Promise<string>
+  downloadedImages = new Map<string, Promise<string>>()
+
+  constructor (private options: ClientOptions = {}) {
     super()
+    this.downloadImage = options.imageDownloader ?? dummyDownloadImage
+  }
+
+  async processActions (actions: Actions[]) {
+    const pendingDownloads: Promise<string>[] = []
+
+    if (this.options.imageDirectory != null) {
+      const images = extractImages(actions)
+
+      for (let image of images) {
+        if (!this.downloadedImages.has(image)) {
+          const p = this.downloadImage(image, this.options.imageDirectory)
+            .then(path => {
+              this.emit('assets_progress', image, path)
+              return path
+            })
+            .catch((err: Error) => {
+              this.emit('assets_error', image, err)
+              throw err
+            })
+          pendingDownloads.push(p)
+          this.downloadedImages.set(image, p)
+        }
+      }
+    }
+
+    this.emit('progress', actions)
+    return Promise.allSettled(pendingDownloads)
   }
 
   private getPageContinuation(data: VideoData): string {
@@ -294,10 +413,10 @@ export class LiveChatClient extends EventEmitter {
       const chatPageResponse = await getChat(
         true,
         this.getPageContinuation(pageData),
-        this.headers
+        this.options.headers ?? {}
       )
 
-      this.emit('progress', chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions || [])
+      this.processActions(chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions || [])
 
       let currentContinuation = this.getLiveChatContinuation(chatPageResponse)
       
@@ -317,14 +436,14 @@ export class LiveChatClient extends EventEmitter {
           chatPageResponse.parsedYtCfg.INNERTUBE_API_KEY,
           chatPageResponse.parsedYtCfg.INNERTUBE_CONTEXT,
           currentContinuationToken,
-          this.headers,
+          this.options.headers ?? {},
           0,
           isInvalidationTimeoutRequest
         )
 
         const actions = data.continuationContents?.liveChatContinuation.actions || []
 
-        this.emit('progress', actions)
+        this.processActions(actions)
 
         const nextContinuation = this.getLiveChatXhrContinuation(data)
         if (nextContinuation == null) {
@@ -358,6 +477,8 @@ export class LiveChatClient extends EventEmitter {
 
   on(ev: 'error', cb: (err: Error) => void): this
   on(ev: 'progress', cb: (list: Actions[]) => void): this
+  on(ev: 'assets_error', cb: (url: string, err: Error) => void): this
+  on(ev: 'assets_progress', cb: (url: string, file_path: string) => void): this
   on(ev: 'finish', cb: () => void): this
   on(ev: string, cb: (...args: any[]) => any): this {
     return super.on(ev, cb)

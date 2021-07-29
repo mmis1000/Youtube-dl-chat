@@ -37,7 +37,7 @@
         {
             "name": "Fetch chat live",
             "request": "launch",
-            "args": ["https://www.youtube.com/watch?v=nbb6VJps8w8"],
+            "args": ["https://www.youtube.com/watch?v=WCUusqsQAWc"],
             "program": "${workspaceFolder}/src/cli/fetchChatLive.ts",
             "skipFiles": [
                 "<node_internals>/**"
