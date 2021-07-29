@@ -247,6 +247,7 @@ export class ReplayChatClient extends EventEmitter {
   async start (pageData: VideoData) {
     try {
       await this.start_(pageData)
+      this.emit('finish')
     } catch (err) {
       this.emit('error', err)
     }
@@ -308,7 +309,6 @@ export class ReplayChatClient extends EventEmitter {
       }
     } finally {
       this.state = ClientState.STOPPED
-      this.emit('finish')
     }
   }
 
@@ -408,6 +408,7 @@ export class LiveChatClient extends EventEmitter {
   async start (pageData: VideoData) {
     try {
       await this.start_(pageData)
+      this.emit('finish')
     } catch (err) {
       this.emit('error', err)
     }
@@ -461,7 +462,6 @@ export class LiveChatClient extends EventEmitter {
 
         const nextContinuation = this.getLiveChatXhrContinuation(data)
         if (nextContinuation == null) {
-          this.emit('finish')
           return
         }
 
@@ -485,7 +485,6 @@ export class LiveChatClient extends EventEmitter {
       }
     } finally {
       this.state = ClientState.STOPPED
-      this.emit('finish')
     }
   }
 
