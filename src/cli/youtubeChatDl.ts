@@ -7,7 +7,7 @@ import { inspect } from 'util'
 import { convertToLines } from '../text-convert-utils'
 import { downloadImage } from '../assets-downloader'
 
-const argv = yargs(hideBin(process.argv))
+yargs(hideBin(process.argv))
   .usage('Usage: $0 [options] <url>')
 
   .command(['$0 <url>'], 'the serve command', (yargs) => {
@@ -34,12 +34,9 @@ const argv = yargs(hideBin(process.argv))
     })
     .strict()
   }, (argv) => {
-    console.log(argv)
     download(argv.url, argv.output, argv['with-assets'])
   })
   .parseSync()
-
-console.log(argv)
 
 function sanitizeFilename (name: string) {
   return name.replace(/[\\\/:\*\?"<>\|]/g, '_')
