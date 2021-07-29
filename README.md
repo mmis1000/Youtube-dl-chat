@@ -2,11 +2,19 @@
 
 A downloader for downloading live chats from youtube (either live or archive)
 
-## requirements
+## Requirements
 
-Node.js 15+
+- Node.js 15+
+- Network (Obviously)
 
 ## Usage
+
+To get the scripts.
+
+1. Go to the release page
+2. Download the script you want
+3. (Optionally) Review the content
+4. `chmod 755 <file name>`
 
 ### The full downloader
 
