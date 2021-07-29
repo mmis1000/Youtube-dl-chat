@@ -80,7 +80,7 @@ export type TextRuns = TextRunText | TextRunEmoji
 
 type AuthorBadge = {
   "liveChatAuthorBadgeRenderer"?: {
-    "customThumbnail": {
+    "customThumbnail"?: {
       "thumbnails": {
         "url": string
       }[]

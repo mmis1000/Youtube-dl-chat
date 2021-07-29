@@ -102,10 +102,17 @@ async function download(url: string, outputDir: string, withAssets: boolean) {
   client.on('progress', actions => {
     for (const action of actions) {
       jsonStream.write(JSON.stringify(action) + '\n')
-      const formattedLines = convertToLines(action)
 
-      for (const line of formattedLines) {
-        textStream.write(line + '\n')
+      try {
+        const formattedLines = convertToLines(action)
+
+        for (const line of formattedLines) {
+          textStream.write(line + '\n')
+        }
+      } catch (err) {
+        console.error('Error during format line')
+        console.error(JSON.stringify(action))
+        console.error(inspect(err))
       }
     }
   })
@@ -118,6 +125,12 @@ async function download(url: string, outputDir: string, withAssets: boolean) {
     console.error('Dump interrupted due to')
     console.error(inspect(err))
   })
+
+  client.on('assets_error', (path, err) => {
+    console.error('Error handling assets %s', path)
+    console.error(inspect(err))
+  })
+
 
   console.log(`Start to dump chat (${withAssets ? 'with' : 'without'} assets)`)
   console.log(`Output directory: ${solved}`)

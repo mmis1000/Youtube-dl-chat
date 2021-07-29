@@ -155,7 +155,7 @@ const extractImages = (actions: Actions[]): string[] => {
 
       if(badges != null) {
         for (let badge of badges) {
-          badge.liveChatAuthorBadgeRenderer?.customThumbnail.thumbnails.forEach(it => images.push(it.url))
+          badge.liveChatAuthorBadgeRenderer?.customThumbnail?.thumbnails.forEach(it => images.push(it.url))
         }
       }
     }
@@ -197,22 +197,26 @@ export class ReplayChatClient extends EventEmitter {
     const pendingDownloads: Promise<string>[] = []
 
     if (this.options.imageDirectory != null) {
-      const images = extractImages(actions)
+      try {
+        const images = extractImages(actions)
 
-      for (let image of images) {
-        if (!this.downloadedImages.has(image)) {
-          const p = this.downloadImage(image, this.options.imageDirectory)
-            .then(path => {
-              this.emit('assets_progress', image, path)
-              return path
-            })
-            .catch((err: Error) => {
-              this.emit('assets_error', image, err)
-              throw err
-            })
-          pendingDownloads.push(p)
-          this.downloadedImages.set(image, p)
+        for (let image of images) {
+          if (!this.downloadedImages.has(image)) {
+            const p = this.downloadImage(image, this.options.imageDirectory)
+              .then(path => {
+                this.emit('assets_progress', image, path)
+                return path
+              })
+              .catch((err: Error) => {
+                this.emit('assets_error', image, err)
+                throw err
+              })
+            pendingDownloads.push(p)
+            this.downloadedImages.set(image, p)
+          }
         }
+      } catch (err) {
+        this.emit('assets_error', '', err)
       }
     }
 
