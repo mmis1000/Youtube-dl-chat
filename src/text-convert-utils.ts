@@ -9,6 +9,7 @@ const runsToText = (runs: TextRuns[]) => {
     }
   }).join('');
 };
+
 const rendererToTime = (item: ChatItemRenderers) => {
   const preformattedTime = item.liveChatTextMessageRenderer?.timestampText?.simpleText
     ?? item.liveChatPaidMessageRenderer?.timestampText?.simpleText
@@ -30,13 +31,27 @@ const rendererToTime = (item: ChatItemRenderers) => {
 
   return new Date(Number(timestampUsec) / 1000).toISOString().replace(/\.\d+Z/, '');
 };
+
+const rendererToBadges = (item: ChatItemRenderers) => {
+  const badges = item.liveChatMembershipItemRenderer?.authorBadges
+    ?? item.liveChatPaidMessageRenderer?.authorBadges
+    ?? item.liveChatTextMessageRenderer?.authorBadges
+  
+  if (badges != null) {
+    return badges.map(it => `[${it.liveChatAuthorBadgeRenderer?.accessibility.accessibilityData.label ?? ''}]`).join('')
+  } else {
+    return ''
+  }
+}
+
 const rendererToText = (item: ChatItemRenderers) => {
   if (item.liveChatTextMessageRenderer) {
     const renderer = item.liveChatTextMessageRenderer;
     const author = renderer.authorName?.simpleText ?? '<unnamed>';
+    const badges = rendererToBadges(item)
     const message = runsToText(renderer.message.runs);
 
-    return `${author}: ${message}`;
+    return `${author}${badges}: ${message}`;
   }
 
   if (item.liveChatMembershipItemRenderer) {
@@ -49,17 +64,19 @@ const rendererToText = (item: ChatItemRenderers) => {
   if (item.liveChatPaidMessageRenderer) {
     const renderer = item.liveChatPaidMessageRenderer;
     const author = renderer.authorName?.simpleText ?? '<unnamed>';
+    const badges = rendererToBadges(item)
     const amount = renderer.purchaseAmountText.simpleText;
 
     const message = renderer.message
       ? runsToText(renderer.message.runs)
       : '<no text>';
 
-    return (`[${amount}] ${author}: ${message}`);
+    return (`[${amount}] ${author}${badges}: ${message}`);
   }
 
   return null;
 };
+
 export const convertToLines = (o: Actions): string[] => {
   const lines = [];
 

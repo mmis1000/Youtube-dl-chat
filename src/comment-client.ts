@@ -148,6 +148,16 @@ const extractImages = (actions: Actions[]): string[] => {
           }
         }
       }
+
+      const badges = i.liveChatMembershipItemRenderer?.authorBadges
+        ?? i.liveChatTextMessageRenderer?.authorBadges
+        ?? i.liveChatPaidMessageRenderer?.authorBadges
+
+      if(badges != null) {
+        for (let badge of badges) {
+          badge.liveChatAuthorBadgeRenderer?.customThumbnail.thumbnails.forEach(it => images.push(it.url))
+        }
+      }
     }
   }
 

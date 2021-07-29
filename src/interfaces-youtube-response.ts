@@ -78,6 +78,22 @@ type TextRunEmoji = NarrowableKeyedItems<TextRunKeys, {
 }>
 export type TextRuns = TextRunText | TextRunEmoji
 
+type AuthorBadge = {
+  "liveChatAuthorBadgeRenderer"?: {
+    "customThumbnail": {
+      "thumbnails": {
+        "url": string
+      }[]
+    }
+    "tooltip": string
+    "accessibility": {
+      "accessibilityData": {
+        "label": string
+      }
+    }
+  }
+}
+
 // Chat item renderer
 
 type ChatItemRendererKeys = 
@@ -103,6 +119,7 @@ type TextChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
         width: number
       }>
     },
+    authorBadges?: AuthorBadge[],
     message: {
       runs: TextRuns[]
     }
@@ -126,6 +143,7 @@ type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
         width: number
       }>
     },
+    authorBadges?: AuthorBadge[],
     purchaseAmountText: {
       simpleText: string
     },
@@ -152,6 +170,7 @@ type MemberChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
         width: number
       }>
     },
+    authorBadges?: AuthorBadge[],
     headerSubtext: {
       runs: TextRuns[]
     }
