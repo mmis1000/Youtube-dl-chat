@@ -120,6 +120,7 @@ async function download(url: string, outputDir: string, withAssets: boolean) {
   })
 
   console.log(`Start to dump chat (${withAssets ? 'with' : 'without'} assets)`)
+  console.log(`Output directory: ${solved}`)
 
   client.start(info)
 }
