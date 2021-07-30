@@ -10,7 +10,21 @@ import { createFetchInstance } from '../fetch-with-cookie'
 import fetch from 'node-fetch'
 
 yargs(hideBin(process.argv))
-  .usage('Usage: $0 [options] <url>')
+  .usage(`Usage: $0 [options] <url>
+
+This is program is used to dump chat from youtube chatroom.
+The full output is saved in a directory with the following structure:
+
+  /[output]/chat.jsonl
+  /[output]/chat.text
+  /[output]/assets/[images] (optional)
+
+The chat is saved in jsonl format. (One JSON object per line)
+With a plain text file chat.txt for readability.
+
+The information in chat.jsonl with assets downloaded should be enough
+  to reconstruct the chat visual identically offline.`)
+
 
   .command(['$0 <url>'], 'the serve command', (yargs) => {
     return yargs
@@ -21,6 +35,13 @@ yargs(hideBin(process.argv))
         nargs: 1,
         default: '[[DATE]][[STREAM_ID]] [TITLE]',
         describe: 'Override the default output directory pattern'
+      },
+      'language': {
+        type: 'string',
+        alias: 'l',
+        nargs: 1,
+        default: 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+        describe: "Abbreviation of the Accept-Language header"
       },
       'with-assets': {
         type: 'boolean',
@@ -73,13 +94,19 @@ yargs(hideBin(process.argv))
       headers[decodeURIComponent(segments[0])] = decodeURIComponent(segments[1])
     }
 
+    const normalized = normalizeHeaders(headers)
+    normalized['Accept-Language'] = argv['language']
+
     download(
       argv.url,
       argv.output,
       argv['with-assets'],
       argv['cookie-jar'],
       argv['write-cookie-jar'],
-      normalizeHeaders(headers)
+      {
+        'Accept-Language': argv['language'],
+        ...normalized
+      }
     )
   })
   .parseSync()
@@ -94,6 +121,9 @@ const substitute = (str: string, dict: Record<string, string>) => {
   })
 }
 
+/**
+ * This only normalizes the header keys for header that conflict with build-in.
+ */
 function normalizeHeaders (header: Record<string, string>) {
   return Object.keys(header).reduce((acc, key) => {
     if(key.toLowerCase() === 'accept-language') {
