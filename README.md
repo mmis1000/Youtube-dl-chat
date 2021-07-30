@@ -84,3 +84,8 @@ The dump contains all information required to reconstruct the chat room.
 # from live
 ./fetchChatLive https://www.youtube.com/watch?v=XXXXXXXX | ./convertToHumanReadable.js > chat.txt
 ```
+
+## Todo
+
+- handle net work error more gracefully (add auto retry?)
+- generate html chat page
