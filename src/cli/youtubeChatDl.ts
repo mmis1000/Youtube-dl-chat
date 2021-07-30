@@ -28,57 +28,63 @@ The information in chat.jsonl with assets downloaded should be enough
 
   .command(['$0 <url>'], 'the serve command', (yargs) => {
     return yargs
-    .options({
-      output: {
+      .options({
+        output: {
+          type: 'string',
+          alias: 'o',
+          nargs: 1,
+          default: '[[DATE]][[STREAM_ID]] [TITLE]',
+          describe: 'Override the default output directory pattern'
+        },
+        language: {
+          type: 'string',
+          alias: 'l',
+          nargs: 1,
+          default: 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+          describe: "Abbreviation of the Accept-Language header"
+        },
+        'with-assets': {
+          type: 'boolean',
+          alias: 'a',
+          nargs: 0,
+          default: false,
+          describe: 'Download image assets (avatar and emojis)'
+        },
+        header: {
+          type: 'string',
+          alias: 'h',
+          nargs: 1,
+          array: true,
+          default: <Array<string>>[],
+          describe: 'Extra headers'
+        },
+        'cookie-jar': {
+          type: 'string',
+          alias: 'j',
+          nargs: 1,
+          default: null,
+          describe: 'Cookie jar path for authorization'
+        },
+        'write-cookie-jar': {
+          type: 'boolean',
+          alias: 'w',
+          nargs: 0,
+          default: false,
+          describe: 'Write back to Cookie jar'
+        },
+        dry: {
+          type: 'boolean',
+          nargs: 0,
+          default: false,
+          describe: 'Dry run, show parsed arguments only'
+        }
+      })
+      .positional('url', {
         type: 'string',
-        alias: 'o',
-        nargs: 1,
-        default: '[[DATE]][[STREAM_ID]] [TITLE]',
-        describe: 'Override the default output directory pattern'
-      },
-      'language': {
-        type: 'string',
-        alias: 'l',
-        nargs: 1,
-        default: 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-        describe: "Abbreviation of the Accept-Language header"
-      },
-      'with-assets': {
-        type: 'boolean',
-        alias: 'a',
-        nargs: 0,
-        default: false,
-        describe: 'Download image assets (avatar and emojis)'
-      },
-      'header': {
-        type: 'string',
-        alias: 'h',
-        nargs: 1,
-        array: true,
-        default: <Array<string>>[],
-        describe: 'Extra headers'
-      },
-      'cookie-jar': {
-        type: 'string',
-        alias: 'j',
-        nargs: 1,
-        default: null,
-        describe: 'Cookie jar path for authorization'
-      },
-      'write-cookie-jar': {
-        type: 'boolean',
-        alias: 'w',
-        nargs: 0,
-        default: false,
-        describe: 'Write back to Cookie jar'
-      }
-    })
-    .positional('url', {
-      type: 'string',
-      describe: 'The YouTube stream/archive URL/ID',
-      demandOption: true
-    })
-    .strict()
+        describe: 'The YouTube stream/archive URL/ID',
+        demandOption: true
+      })
+      .strict()
   }, (argv) => {
     const headerList = argv.header
 
@@ -95,7 +101,18 @@ The information in chat.jsonl with assets downloaded should be enough
     }
 
     const normalized = normalizeHeaders(headers)
-    normalized['Accept-Language'] = argv['language']
+
+    const merged = {
+      'Accept-Language': argv['language'],
+      ...normalized
+    }
+
+    if (argv.dry) {
+      console.log('Doing a dry run')
+      console.log('Arguments %s', inspect(argv))
+      console.log('Normalized Headers %s', inspect(merged))
+      return
+    }
 
     download(
       argv.url,
@@ -103,15 +120,12 @@ The information in chat.jsonl with assets downloaded should be enough
       argv['with-assets'],
       argv['cookie-jar'],
       argv['write-cookie-jar'],
-      {
-        'Accept-Language': argv['language'],
-        ...normalized
-      }
+      merged
     )
   })
   .parseSync()
 
-function sanitizeFilename (name: string) {
+function sanitizeFilename(name: string) {
   return name.replace(/[\\\/:\*\?"<>\|]/g, '_')
 }
 
@@ -124,12 +138,12 @@ const substitute = (str: string, dict: Record<string, string>) => {
 /**
  * This only normalizes the header keys for header that conflict with build-in.
  */
-function normalizeHeaders (header: Record<string, string>) {
+function normalizeHeaders(header: Record<string, string>) {
   return Object.keys(header).reduce((acc, key) => {
-    if(key.toLowerCase() === 'accept-language') {
+    if (key.toLowerCase() === 'accept-language') {
       acc['Accept-Language'] = header[key]
     }
-    if(key.toLowerCase() === 'user-agent') {
+    if (key.toLowerCase() === 'user-agent') {
       acc['User-Agent'] = header[key]
     }
     acc[key] = header[key]
