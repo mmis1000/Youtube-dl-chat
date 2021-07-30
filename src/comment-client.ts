@@ -2,7 +2,7 @@ import fetch, { Response } from 'node-fetch'
 import EventEmitter from "events";
 import { Actions, AddChatItemAction, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayAbleChatActions, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
-import { getURLVideoID } from "./youtube-dl-utils";
+import { getURLVideoID, validateID } from "./youtube-dl-utils";
 import assert from 'assert';
 import { DEFAULT_HEADERS } from './constants';
 
@@ -17,11 +17,11 @@ const assertResponseOk = (res: Response) => {
 }
 
 export async function getPage(
-  url: string,
+  urlOrId: string,
   headers: Record<string, string>,
   fetchImpl: typeof fetch = fetch
 ): Promise<VideoData> {
-  const id = getURLVideoID(url)
+  const id = validateID(urlOrId) ? urlOrId : getURLVideoID(urlOrId)
   const fixedPageURL = 'https://www.youtube.com/watch?v=' + id
 
   const res = await fetchImpl(
