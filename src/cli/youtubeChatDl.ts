@@ -6,6 +6,8 @@ import path from 'path'
 import { inspect } from 'util'
 import { convertToLines } from '../text-convert-utils'
 import { downloadImage } from '../assets-downloader'
+import { createFetchInstance } from '../fetch-with-cookie'
+import fetch from 'node-fetch'
 
 yargs(hideBin(process.argv))
   .usage('Usage: $0 [options] <url>')
@@ -16,6 +18,7 @@ yargs(hideBin(process.argv))
       output: {
         type: 'string',
         alias: 'o',
+        nargs: 1,
         default: '[[DATE]][[STREAM_ID]] [TITLE]',
         describe: 'Override the default output directory pattern'
       },
@@ -25,6 +28,20 @@ yargs(hideBin(process.argv))
         nargs: 0,
         default: false,
         describe: 'Download image assets (avatar and emojis)'
+      },
+      'cookie-jar': {
+        type: 'string',
+        alias: 'j',
+        nargs: 1,
+        default: null,
+        describe: 'Cookie jar path for authorization'
+      },
+      'write-cookie-jar': {
+        type: 'boolean',
+        alias: 'w',
+        nargs: 0,
+        default: false,
+        describe: 'Write back to Cookie jar'
       }
     })
     .positional('url', {
@@ -34,7 +51,13 @@ yargs(hideBin(process.argv))
     })
     .strict()
   }, (argv) => {
-    download(argv.url, argv.output, argv['with-assets'])
+    download(
+      argv.url,
+      argv.output,
+      argv['with-assets'],
+      argv['cookie-jar'],
+      argv['write-cookie-jar']
+    )
   })
   .parseSync()
 
@@ -48,8 +71,16 @@ const substitute = (str: string, dict: Record<string, string>) => {
   })
 }
 
-async function download(url: string, outputDir: string, withAssets: boolean) {
-  const info = await getPage(url, {})
+async function download(
+  url: string,
+  outputDir: string,
+  withAssets: boolean,
+  cookieJar: string | null,
+  writeCookieJar: boolean
+) {
+  const fetchImpl = cookieJar ? createFetchInstance(cookieJar, writeCookieJar) : fetch
+
+  const info = await getPage(url, {}, fetchImpl)
 
   const isLive = info.parsedInitialPlayerResponse.videoDetails.isLive === true
   const isArchive = !isLive && info.parsedInitialPlayerResponse.videoDetails.isLiveContent === true
@@ -89,10 +120,12 @@ async function download(url: string, outputDir: string, withAssets: boolean) {
 
   const client = isLive ? new LiveChatClient({
     imageDirectory: withAssets ? assetsDir : null,
-    imageDownloader: downloadImage
+    imageDownloader: downloadImage,
+    fetchImpl
   }) : new ReplayChatClient({
     imageDirectory: withAssets ? assetsDir : null,
-    imageDownloader: downloadImage
+    imageDownloader: downloadImage,
+    fetchImpl
   })
 
   client.on('error', err => {

@@ -20,11 +20,15 @@ const DEFAULT_HEADERS = Object.freeze({
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
 })
 
-export async function getPage(url: string, headers: Record<string, string>): Promise<VideoData> {
+export async function getPage(
+  url: string,
+  headers: Record<string, string>,
+  fetchImpl: typeof fetch = fetch
+): Promise<VideoData> {
   const id = getURLVideoID(url)
   const fixedPageURL = 'https://www.youtube.com/watch?v=' + id
 
-  const res = await fetch(
+  const res = await fetchImpl(
     fixedPageURL,
     {
       "headers": {
@@ -41,12 +45,17 @@ export async function getPage(url: string, headers: Record<string, string>): Pro
   return parseVideo(text)
 }
 
-export async function getChat(isLive: boolean, continuation: string, headers: Record<string, string>): Promise<ChatData> {
+export async function getChat(
+  isLive: boolean,
+  continuation: string,
+  headers: Record<string, string>,
+  fetchImpl: typeof fetch = fetch
+): Promise<ChatData> {
   const url = isLive
   ? 'https://www.youtube.com/live_chat?continuation=' + continuation
   : 'https://www.youtube.com/live_chat_replay?continuation=' + continuation
 
-  const res = await fetch(
+  const res = await fetchImpl(
     url,
     {
       "headers": {
@@ -70,7 +79,8 @@ export async function getChatXhr(
   continuation: string,
   headers: Record<string, string>,
   timeOffset: number = 0,
-  isInvalidationTimeoutRequest: boolean = false
+  isInvalidationTimeoutRequest: boolean = false,
+  fetchImpl: typeof fetch = fetch
 ): Promise<ChatXhrData> {
   const url = isLive
     ? `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${innerTubeKey}`
@@ -93,7 +103,7 @@ export async function getChatXhr(
     })
   }
 
-  const res = await fetch(
+  const res = await fetchImpl(
     url,
     {
       "headers": {
@@ -117,9 +127,10 @@ enum ClientState {
 }
 
 interface ClientOptions {
-  imageDirectory?: string | null,
+  imageDirectory?: string | null
   headers?: Record<string, string>
   imageDownloader?: (imageURL: string, imageDirectory: string) => Promise<string>
+  fetchImpl?: typeof fetch
 }
 
 const extractImages = (actions: Actions[]): string[] => {
@@ -188,9 +199,12 @@ export class ReplayChatClient extends EventEmitter {
   downloadImage: (imageURL: string, imageDirectory: string) => Promise<string>
   downloadedImages = new Map<string, Promise<string>>()
 
+  fetchImpl: typeof fetch
+
   constructor (private options: ClientOptions = {}) {
     super()
     this.downloadImage = options.imageDownloader ?? dummyDownloadImage
+    this.fetchImpl = options.fetchImpl ?? fetch
   }
 
   async processActions (actions: Actions[]) {
@@ -267,7 +281,8 @@ export class ReplayChatClient extends EventEmitter {
       const chatPageResponse = await getChat(
         false,
         this.getPageContinuation(pageData),
-        this.options.headers ?? {}
+        this.options.headers ?? {},
+        this.fetchImpl
       )
 
       if (chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions == null) {
@@ -287,7 +302,9 @@ export class ReplayChatClient extends EventEmitter {
           chatPageResponse.parsedYtCfg.INNERTUBE_CONTEXT,
           currentContinuation,
           this.options.headers ?? {},
-          lastTime
+          lastTime,
+          false,
+          this.fetchImpl
         )
 
         const actions = data.continuationContents!.liveChatContinuation.actions
@@ -334,9 +351,12 @@ export class LiveChatClient extends EventEmitter {
   downloadImage: (imageURL: string, imageDirectory: string) => Promise<string>
   downloadedImages = new Map<string, Promise<string>>()
 
+  fetchImpl: typeof fetch
+
   constructor (private options: ClientOptions = {}) {
     super()
     this.downloadImage = options.imageDownloader ?? dummyDownloadImage
+    this.fetchImpl = options.fetchImpl ?? fetch
   }
 
   async processActions (actions: Actions[]) {
@@ -428,7 +448,8 @@ export class LiveChatClient extends EventEmitter {
       const chatPageResponse = await getChat(
         true,
         this.getPageContinuation(pageData),
-        this.options.headers ?? {}
+        this.options.headers ?? {},
+        this.fetchImpl
       )
 
       this.processActions(chatPageResponse.parsedInitialData.continuationContents.liveChatContinuation.actions || [])
@@ -453,7 +474,8 @@ export class LiveChatClient extends EventEmitter {
           currentContinuationToken,
           this.options.headers ?? {},
           0,
-          isInvalidationTimeoutRequest
+          isInvalidationTimeoutRequest,
+          this.fetchImpl
         )
 
         const actions = data.continuationContents?.liveChatContinuation.actions || []

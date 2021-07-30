@@ -1,12 +1,23 @@
-"use strict";
+declare module 'fetch-cookie' {
+    export const toughCookie: typeof import('tough-cookie')
+}
 
 import { readFile, writeFile, promises as fs } from 'fs';
 import { inspect as _inspect, promisify } from 'util';
-import { canonicalDomain as _canonicalDomain, permuteDomain as _permuteDomain, permutePath as _permutePath, Cookie, Store } from 'tough-cookie';
-var canonicalDomain = _canonicalDomain
-var permuteDomain = _permuteDomain
-var permutePath = _permutePath
 import { lock, unlock } from 'lockfile';
+
+import { toughCookie } from 'fetch-cookie'
+
+const {
+    canonicalDomain,
+    permuteDomain,
+    permutePath,
+} = toughCookie;
+
+type Cookie = import('tough-cookie').Cookie
+const Cookie = toughCookie.Cookie as new (...args: ConstructorParameters<typeof import('tough-cookie').Cookie>) => Cookie;
+type Store = import('tough-cookie').Store
+const Store = toughCookie.Store as new (...args: ConstructorParameters<typeof import('tough-cookie').Store>) => Store
 
 type DropLast<T> =
     T extends [infer U1, infer U2, infer U3, infer U4, infer U5, any] ? [U1, U2, U3, U4, U5]
@@ -32,7 +43,7 @@ const nbind = <T extends (...args: any[]) => any>(
     return promisify(fn.bind(self));
 }
 
-const nfcall = <T extends (...args: any[]) => any, ParameterLength extends number>(
+const nfcall = <T extends (...args: any[]) => any>(
     fn: T,
     ...args: any[]
 ): Promise<ReturnType<T>> => {
@@ -40,7 +51,7 @@ const nfcall = <T extends (...args: any[]) => any, ParameterLength extends numbe
     return wrapped(...args) as any;
 }
 
-const Q = Promise.resolve
+const Q = <T = void>(arg?: T) => Promise.resolve(arg)
 
 const all = Promise.all
 
@@ -68,7 +79,7 @@ interface WriteOptions {
 }
 interface DomainData {
     [path: string]: {
-        [key: string]: Cookie
+        [key: string]: import('tough-cookie').Cookie
     }
 }
 
@@ -133,7 +144,7 @@ class FileCookieStore extends Store {
 
         type a = ParametersByLength<typeof lock, 3>
 
-        return !disable_lock && this.lockfile ? nfcall<typeof lock, 3>(lock, lock_file, {
+        return !disable_lock && this.lockfile ? nfcall(lock, lock_file, {
             retries: this.lockfile_retries,
             retryWait: 50
         }) : Q();
@@ -205,7 +216,7 @@ class FileCookieStore extends Store {
                         /^\./.test(cookie_domain ?? '') ? "TRUE" : "FALSE",
                         cookie.path,
                         cookie.secure ? "TRUE" : "FALSE",
-                        cookie.expires && cookie.expires != 'Infinity' ? Math.round(cookie.expires.getTime() / 1000) : 0,
+                        cookie.expires && cookie.expires != 'Infinity' ? Math.round(cookie.expires.getTime() / 1000) : '0',
                         encodeURIComponent(cookie.key),
                         encodeURIComponent(cookie.value),
                         ].join("\t") + "\n";
@@ -257,7 +268,7 @@ class FileCookieStore extends Store {
                     path: parsed[2],
                     secure: parsed[3] == 'TRUE' ? true : false,
                     //expires : parseInt(parsed[4]) ? new Date(parsed[4] * 1000) : undefined,
-                    expires: parseInt(parsed[4]) ? new Date(Number(parsed[4]) * 1000) : undefined,
+                    expires: parseInt(parsed[4]) ? new Date(Number(parsed[4]) * 1000) : new Date(0),
                     key: decodeURIComponent(parsed[5]),
                     value: decodeURIComponent(parsed[6]),
                     httpOnly: http_only,
