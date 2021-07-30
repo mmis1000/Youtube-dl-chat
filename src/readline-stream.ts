@@ -34,8 +34,6 @@ export class ReadlineStream  extends Transform {
 
     let lines = this.lineBuffer.match(this.re)!;
 
-    // if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
-
     while(lines.length > 1) {
       const line = lines.shift()!
 

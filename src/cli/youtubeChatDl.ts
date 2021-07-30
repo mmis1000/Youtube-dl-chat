@@ -29,6 +29,14 @@ yargs(hideBin(process.argv))
         default: false,
         describe: 'Download image assets (avatar and emojis)'
       },
+      'header': {
+        type: 'string',
+        alias: 'h',
+        nargs: 1,
+        array: true,
+        default: <Array<string>>[],
+        describe: 'Extra headers'
+      },
       'cookie-jar': {
         type: 'string',
         alias: 'j',

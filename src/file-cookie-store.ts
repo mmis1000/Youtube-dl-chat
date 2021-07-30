@@ -267,8 +267,9 @@ class FileCookieStore extends Store {
                     domain: can_domain,
                     path: parsed[2],
                     secure: parsed[3] == 'TRUE' ? true : false,
-                    //expires : parseInt(parsed[4]) ? new Date(parsed[4] * 1000) : undefined,
-                    expires: parseInt(parsed[4]) ? new Date(Number(parsed[4]) * 1000) : new Date(0),
+                    ...(parseInt(parsed[4]) ? {
+                        expires: new Date(Number(parsed[4]) * 1000)
+                    } : {} ),
                     key: decodeURIComponent(parsed[5]),
                     value: decodeURIComponent(parsed[6]),
                     httpOnly: http_only,
