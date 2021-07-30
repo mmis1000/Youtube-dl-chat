@@ -3,7 +3,8 @@ import EventEmitter from "events";
 import { Actions, AddChatItemAction, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayAbleChatActions, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
 import { getURLVideoID } from "./youtube-dl-utils";
-import { assert } from 'console';
+import assert from 'assert';
+import { DEFAULT_HEADERS } from './constants';
 
 const select = <T extends {}, U extends keyof T>(arr: T[], key: U): Pick<T, U>[U] | undefined => {
   return arr.find(it => it[key] != null)?.[key] as unknown as Pick<T, U>[U] | undefined
@@ -14,11 +15,6 @@ const assertResponseOk = (res: Response) => {
   assert(res.status !== 404, 'The video has been deleted')
   assert(res.status >= 200 && res.status < 300, `Must not get an error status code ${res.status}`)
 }
-
-const DEFAULT_HEADERS = Object.freeze({
-  "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-})
 
 export async function getPage(
   url: string,

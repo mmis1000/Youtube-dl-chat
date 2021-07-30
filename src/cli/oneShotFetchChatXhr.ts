@@ -1,18 +1,14 @@
 const url = process.argv[2]
 
 import fetch from 'node-fetch'
+import { DEFAULT_HEADERS } from '../constants'
 import { parseChat, parseVideo } from '../parser'
-
-const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
 
 async function main () {
     const res = await fetch(
         url,
         {
-            "headers": {
-                "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-                "User-Agent": userAgent
-            }
+            "headers": DEFAULT_HEADERS
         }
     )
 
@@ -41,10 +37,7 @@ async function main () {
     const chatPageRes = await fetch(
         chatPageUrl,
         {
-            "headers": {
-                "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-                "User-Agent": userAgent
-            }
+            "headers": DEFAULT_HEADERS
         }
     )
     const chatPageText = await chatPageRes.text()
@@ -85,8 +78,7 @@ async function main () {
         xhrUrl,
         {
             headers: {
-                "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-                "User-Agent": userAgent,
+                ...DEFAULT_HEADERS,
                 "content-type": "application/json"
             },
             body: JSON.stringify(request),

@@ -59,12 +59,27 @@ yargs(hideBin(process.argv))
     })
     .strict()
   }, (argv) => {
+    const headerList = argv.header
+
+    const headers: Record<string, string> = {}
+
+    for (let item of headerList) {
+      const segments = item.split(':')
+
+      if (segments.length !== 2) {
+        throw new Error(`Invalid header: ${item}`)
+      }
+
+      headers[decodeURIComponent(segments[0])] = decodeURIComponent(segments[1])
+    }
+
     download(
       argv.url,
       argv.output,
       argv['with-assets'],
       argv['cookie-jar'],
-      argv['write-cookie-jar']
+      argv['write-cookie-jar'],
+      normalizeHeaders(headers)
     )
   })
   .parseSync()
@@ -79,16 +94,31 @@ const substitute = (str: string, dict: Record<string, string>) => {
   })
 }
 
+function normalizeHeaders (header: Record<string, string>) {
+  return Object.keys(header).reduce((acc, key) => {
+    if(key.toLowerCase() === 'accept-language') {
+      acc['Accept-Language'] = header[key]
+    }
+    if(key.toLowerCase() === 'user-agent') {
+      acc['User-Agent'] = header[key]
+    }
+    acc[key] = header[key]
+
+    return acc
+  }, {} as Record<string, string>)
+}
+
 async function download(
   url: string,
   outputDir: string,
   withAssets: boolean,
   cookieJar: string | null,
-  writeCookieJar: boolean
+  writeCookieJar: boolean,
+  headers: Record<string, string>
 ) {
   const fetchImpl = cookieJar ? createFetchInstance(cookieJar, writeCookieJar) : fetch
 
-  const info = await getPage(url, {}, fetchImpl)
+  const info = await getPage(url, headers, fetchImpl)
 
   const isLive = info.parsedInitialPlayerResponse.videoDetails.isLive === true
   const isArchive = !isLive && info.parsedInitialPlayerResponse.videoDetails.isLiveContent === true
@@ -122,15 +152,16 @@ async function download(
     await fs.mkdir(assetsDir, { recursive: true })
   }
 
-
   const jsonStream = createWriteStream(path.resolve(solved, 'chat.jsonl'), { flags: 'a' })
   const textStream = createWriteStream(path.resolve(solved, 'chat.txt'), { flags: 'a' })
 
   const client = isLive ? new LiveChatClient({
+    headers,
     imageDirectory: withAssets ? assetsDir : null,
     imageDownloader: downloadImage,
     fetchImpl
   }) : new ReplayChatClient({
+    headers,
     imageDirectory: withAssets ? assetsDir : null,
     imageDownloader: downloadImage,
     fetchImpl
