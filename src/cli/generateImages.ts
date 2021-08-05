@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-core';
+import puppeteer, { BrowserFetcherRevisionInfo, BrowserFetcher } from 'puppeteer-core';
 import path from 'path'
 import http from 'http';
 import { promises as fs, createReadStream } from 'fs';
@@ -9,12 +9,27 @@ const ADMIN_COLOR = '#5e84fe'
 const MEMBER_COLOR = '#2ba640'
 
 const WIDTH = 320
-const chromiumVersion = 848005
+const chromiumVersion = '848005'
 const currentDir = process.cwd();
 const logDir = path.resolve(currentDir, process.argv[2]);
 const logFull = path.resolve(logDir, 'chat.jsonl');
 const logAssetDir = path.resolve(logDir, 'assets');
 const outputDir = path.resolve(logDir, 'screenshots');
+
+const getIndexHTML = async (): Promise<string> => {
+  try {
+    return require('../html/index.html?raw')
+  } catch (err) {
+    return fs.readFile(path.resolve(__dirname, '../html/index.html'), 'utf8')
+  }
+}
+const getPlayerJs = async (): Promise<string> => {
+  try {
+    return require('../html/player.ts?raw')
+  } catch (err) {
+    return fs.readFile(path.resolve(__dirname, '../html/player.js'), 'utf8')
+  }
+}
 
 function createTempServer(assetsDir: string) {
   const server = http.createServer(async (req, res) => {
@@ -22,13 +37,15 @@ function createTempServer(assetsDir: string) {
 
     if (parsed.pathname === '/') {
       res.writeHead(200, { 'Content-Type': 'text/html' });
-      createReadStream(path.resolve(__dirname, '../html/index.html')).pipe(res);
+      res.write(await getIndexHTML())
+      res.end()
       return
     }
 
     if (parsed.pathname === '/player.js') {
       res.writeHead(200, { 'Content-Type': 'application/javascript' });
-      createReadStream(path.resolve(__dirname, '../html/player.js')).pipe(res);
+      res.write(await getPlayerJs())
+      res.end()
       return
     }
 
@@ -79,19 +96,24 @@ function createTempServer(assetsDir: string) {
   })
 }
 
-// createTempServer(logAssetDir).then(p => {
-//   console.log(`Server listening at http://localhost:${p}/`)
-// })
-
 async function main() {
   const serverPort = await createTempServer(logAssetDir)
-  console.log(`Server listening at http://localhost:${serverPort}/`)
+  console.log(`Temporary server listening at http://localhost:${serverPort}/`)
 
-  const browserFetcher = (puppeteer as any).createBrowserFetcher();
+  const browserFetcher = (puppeteer as any).createBrowserFetcher() as BrowserFetcher;
 
-  console.error(`Downloading chromium ${chromiumVersion}`)
-  const revisionInfo = await browserFetcher.download(chromiumVersion);
-  console.error(`Chromium ${chromiumVersion} downloaded`)
+  const localRevisions = await browserFetcher.localRevisions()
+
+  let revisionInfo: BrowserFetcherRevisionInfo
+
+  if (localRevisions.find(it => it === chromiumVersion)) {
+    revisionInfo = await browserFetcher.revisionInfo(chromiumVersion)
+    console.log(`Chromium ${chromiumVersion} already available at ${revisionInfo.folderPath}`)
+  } else {
+    console.error(`Downloading chromium ${chromiumVersion}`)
+    revisionInfo = await browserFetcher.download(chromiumVersion);
+    console.error(`Chromium ${chromiumVersion} downloaded to ${revisionInfo.folderPath}`)
+  }
 
   const browser = await puppeteer.launch({
     executablePath: revisionInfo.executablePath
@@ -182,6 +204,7 @@ async function main() {
 
   const BATCH = 100
   for (let i = 0; i < entries.length; i += BATCH) {
+    const start = Date.now()
     const slice = entries.slice(i, i + BATCH)
 
     const viewport = await page.evaluate((actions: Line[]) => {
@@ -207,7 +230,7 @@ async function main() {
       }
     })
 
-    console.log(`Entries #${i} to #${Math.min(i + 99, entries.length - 1)}`)
+    console.log(`Generated entries #${i} to #${Math.min(i + 99, entries.length - 1)} (${Date.now() - start}ms)`)
   }
   await fs.writeFile(`${logDir}/screenshots.json`, JSON.stringify(infos, undefined, 2))
 

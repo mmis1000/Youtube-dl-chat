@@ -56,7 +56,7 @@ const rendererToText = (item: ChatItemRenderers) => {
 
   if (item.liveChatMembershipItemRenderer) {
     const renderer = item.liveChatMembershipItemRenderer;
-    const message = runsToText(renderer.headerSubtext.runs);
+    const message = renderer.headerSubtext?.simpleText ?? runsToText(renderer.headerSubtext.runs);
 
     return message;
   }

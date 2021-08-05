@@ -76,26 +76,28 @@
       word-break: break-word;
     }
 
+    .messageWrapper .nameWrapper {
+      display: inline-flex;
+      margin-right: 6px;
+      /* align-items: center; */
+      flex-wrap: nowrap;
+    }
+
     .messageWrapper .name {
       font-weight: 500;
-      margin-right: 8px;
+      margin-right: 2px;
     }
 
     .messageWrapper .badge {
       display: inline-block;
       vertical-align: sub;
+      margin-right: 2px;
     }
 
     .messageWrapper img.badge,
     .messageWrapper div.badge svg {
       height: 16px;
       width: 16px;
-    }
-
-    .messageWrapper .name+.badge,
-    .messageWrapper .badge+.badge {
-      margin-left: -6px;
-      margin-right: 8px;
     }
 
     .messageWrapper .image {

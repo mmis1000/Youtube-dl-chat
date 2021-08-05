@@ -26,7 +26,7 @@ async function main() {
     const rec = printLines([
       {
         id: 'a',
-        name: 'Андрей',
+        name: 'АндрейАндрейАндрейАндрейАндрейАндрейндрей',
         color: '#ff0000',
         head: './images/head.jpg',
         badges: [{

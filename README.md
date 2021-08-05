@@ -26,7 +26,7 @@ To get the scripts.
 ```txt
 Usage: youtube-chat-dl [options] <url>
 
-This is program is used to dump chat from youtube chatroom.
+This program is used to dump chat from youtube chatroom.
 The full output is saved in a directory with the following structure:
 
   /[output]/chat.jsonl
@@ -87,5 +87,5 @@ The dump contains all information required to reconstruct the chat room.
 
 ## Todo
 
-- handle net work error more gracefully (add auto retry?)
+- handle network error more gracefully (add auto retry?)
 - generate html chat page

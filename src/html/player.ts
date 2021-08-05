@@ -70,26 +70,33 @@ async function printLines(lines: Line[]) {
       messageWrapperInner.className = 'inner';
       messageWrapper.appendChild(messageWrapperInner);
 
-      const name = document.createElement('span');
-      name.className = 'name';
-      name.textContent = lines[i].name;
-      name.style.color = lines[i].color;
-      messageWrapperInner.appendChild(name);
+      // name section
+      const nameWrapper = document.createElement('span');
+      nameWrapper.className = 'nameWrapper'
+      messageWrapperInner.appendChild(nameWrapper)
+      {
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = lines[i].name;
+        name.style.color = lines[i].color;
+        nameWrapper.appendChild(name);
 
-      for (let badge of lines[i].badges) {
-        if (badge.type === 'url') {
-          const image = createImage(badge.url);
-          image.className = 'badge'
-          messageWrapperInner.appendChild(image);
-        } else {
-          const svgWrapper = document.createElement('div');
-          svgWrapper.className = 'badge'
-          svgWrapper.style.color = lines[i].color
+        for (const [index, badge] of lines[i].badges.entries()) {
+          let item: HTMLElement
+          if (badge.type === 'url') {
+            const image = item = createImage(badge.url);
+            image.className = 'badge'
+            nameWrapper.appendChild(image);
+          } else {
+            const svgWrapper = item = document.createElement('div');
+            svgWrapper.className = 'badge'
+            svgWrapper.style.color = lines[i].color
 
-          const svgIcon = MODERATOR_ICON.cloneNode(true);
-          svgWrapper.appendChild(svgIcon)
+            const svgIcon = MODERATOR_ICON.cloneNode(true);
+            svgWrapper.appendChild(svgIcon)
 
-          messageWrapperInner.appendChild(svgWrapper)
+            nameWrapper.appendChild(svgWrapper)
+          }
         }
       }
 

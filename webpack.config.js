@@ -12,7 +12,8 @@ const config = {
         fetchChatAll: './src/cli/fetchChatAll.ts',
         fetchChatLive: './src/cli/fetchChatLive.ts',
         convertToHumanReadable: './src/cli/convertToHumanReadable.ts',
-        'youtube-chat-dl': './src/cli/youtubeChatDl.ts'
+        'youtube-chat-dl': './src/cli/youtubeChatDl.ts',
+        generateImages: './src/cli/generateImages.ts',
     },
     output: {
         filename: '[name]',
@@ -39,6 +40,15 @@ const config = {
                 test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
                 type: 'asset',
             },
+            { 
+                resourceQuery: /raw/,
+                type: 'asset/inline',
+                generator: {
+                    dataUrl: content => {
+                        return content.toString();
+                    }
+                }
+            }
             // Add your rules for custom modules here
             // Learn more about loaders from https://webpack.js.org/loaders/
         ],

@@ -186,6 +186,10 @@ type MemberChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
     authorBadges?: AuthorBadge[],
     headerSubtext: {
       runs: TextRuns[]
+      simpleText?: never
+    } | {
+      runs?: never
+      simpleText: string
     }
   }
 }>
