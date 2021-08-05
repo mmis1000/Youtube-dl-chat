@@ -80,11 +80,21 @@ export type TextRuns = TextRunText | TextRunEmoji
 
 type AuthorBadge = {
   "liveChatAuthorBadgeRenderer"?: {
-    "customThumbnail"?: {
+    "customThumbnail": {
       "thumbnails": {
         "url": string
       }[]
     }
+    "icon"?: never
+    "tooltip": string
+    "accessibility": {
+      "accessibilityData": {
+        "label": string
+      }
+    }
+  } | {
+    "customThumbnail"?: never
+    "icon": { "iconType": "MODERATOR" }
     "tooltip": string
     "accessibility": {
       "accessibilityData": {
@@ -104,6 +114,7 @@ type ChatItemRendererKeys =
 
 type TextChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
   liveChatTextMessageRenderer: {
+    id: string,
     timestampUsec: string,
     /** only in replay */
     timestampText?: {
@@ -128,6 +139,7 @@ type TextChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
 
 type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
   liveChatPaidMessageRenderer: {
+    id: string,
     timestampUsec: string,
     /** only in replay */
     timestampText?: {
@@ -155,6 +167,7 @@ type PaidChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
 
 type MemberChatItemRenderer = NarrowableKeyedItems<ChatItemRendererKeys, {
   liveChatMembershipItemRenderer: {
+    id: string,
     timestampUsec: string,
     /** only in replay */
     timestampText?: {
