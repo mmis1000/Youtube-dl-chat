@@ -176,7 +176,8 @@ async function main() {
         y: area.offset,
         width: WIDTH,
         height: area.height
-      }
+      },
+      omitBackground: true
     })
     await fs.writeFile(`./screenshots/${area.id}.json`, JSON.stringify(area))
   }

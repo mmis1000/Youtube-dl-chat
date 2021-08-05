@@ -227,7 +227,8 @@ async function main() {
         y: 0,
         width: WIDTH,
         height: ~~viewport.height
-      }
+      },
+      omitBackground: true
     })
 
     console.log(`Generated entries #${i} to #${Math.min(i + 99, entries.length - 1)} (${Date.now() - start}ms)`)
