@@ -122,3 +122,4 @@ dist-bundled
 .local-chromium/*
 */assets/*
 */output/*
+*/screenshots/*
