@@ -28,6 +28,12 @@ async function main() {
   
   const totalLength = endTime.getTime() - startTime.getTime()
 
+  console.log(
+    data.parsedInitialPlayerResponse.microformat.playerMicroformatRenderer.liveBroadcastDetails.startTimestamp,
+    data.parsedInitialPlayerResponse.microformat.playerMicroformatRenderer.liveBroadcastDetails.endTimestamp,
+    totalLength / 1000
+  )
+
   interface Resolved extends Screenshot {
     relativeTime: number
     duration: number
@@ -42,7 +48,7 @@ async function main() {
   const resolvedScreenshots: Resolved[] = screenshots.map((it, i, arr) => {
     const time = getRelativeFromTimestamp(it.time)
     const duration = arr[i + 1] == null 
-      ? 10000
+      ? endTime.getTime() - time
       : getRelativeFromTimestamp(arr[i + 1].time) - time
     return {
       ...it,
@@ -53,18 +59,37 @@ async function main() {
 
   const startIndex = Math.max(resolvedScreenshots.findIndex(i => i.relativeTime >= 0) - 1, 0)
 
-  const endIndex = Math.max(resolvedScreenshots.findIndex(i => i.relativeTime > totalLength) - 1, resolvedScreenshots.length - 1)
+  const prepend = resolvedScreenshots[startIndex].relativeTime > 0 
+    ? [
+      `file 'screenshots/empty.png'`,
+      `duration ${resolvedScreenshots[startIndex].relativeTime / 1000}`
+    ]
+    : []
 
-  const res = resolvedScreenshots
+  let endIndex = resolvedScreenshots.findIndex(i => i.relativeTime > totalLength) - 1
+  endIndex = endIndex === -2 ? resolvedScreenshots.length - 1 : endIndex
+
+  const timestamps = resolvedScreenshots
     .slice(startIndex, endIndex + 1)
-    .map(it => [
-      `file 'screenshots/${it.file}'`,
-      `duration ${it.duration / 1000}`
-    ])
+    .map(it => {
+      const duration = it.relativeTime < 0
+        ? it.duration + it.relativeTime
+        : it.relativeTime + it.duration > totalLength
+          ? totalLength - it.relativeTime
+          : it.duration
+      return [
+        `file 'screenshots/${it.file}'`,
+        `duration ${duration / 1000}`
+      ]
+    })
     .flat()
+
+  const res = prepend.concat(timestamps)
     .join('\n')
   
-    await fs.writeFile(ffmpegInfoFile, res)
+  await fs.writeFile(ffmpegInfoFile, res)
+
+  await fs.writeFile(shellCommandsFile, `ffmpeg -f lavfi -i color=c=black:s=${WIDTH}x${HEIGHT} -f concat -i timestamps.txt -filter_complex "[0:v][1:v]overlay=shortest=1[v1]" -map '[v1]' -pix_fmt yuv420p -c:v libx264 test.mp4`)
 }
 
 main()

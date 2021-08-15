@@ -111,6 +111,7 @@ export interface ScreenshotSummary {
   info: {
     width: number
     height: number
+    emptyFile: string
   }
 
   entries: Screenshot[]
@@ -215,6 +216,25 @@ async function main() {
     return lines
   }
 
+  // Generate empty file
+
+  const emptyFile = 'empty.png'
+
+  await page.screenshot({
+    path: `${outputDir}/${emptyFile}`,
+    type: 'png',
+    clip: {
+      x: 0,
+      y: -HEIGHT,
+      width: WIDTH,
+      height: HEIGHT
+    },
+    omitBackground: true,
+  })
+
+  console.log(`Generated empty file`)
+
+  // Generate actual screenshot
 
   const infos: Screenshot[] = []
 
@@ -276,7 +296,8 @@ async function main() {
   await fs.writeFile(`${logDir}/screenshots.json`, JSON.stringify(<ScreenshotSummary>{
     info: {
       width: WIDTH * SCALE_FACTOR,
-      height: HEIGHT * SCALE_FACTOR
+      height: HEIGHT * SCALE_FACTOR,
+      emptyFile: emptyFile
     },
     entries: infos
   }, undefined, 2))
