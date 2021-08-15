@@ -174,11 +174,11 @@ async function download(
 
   const id = info.parsedInitialPlayerResponse.videoDetails.videoId
   const videoName = info.parsedInitialPlayerResponse.videoDetails.title
-  const currentDate = new Date()
+  const liveDate = new Date(info.parsedInitialPlayerResponse.microformat.playerMicroformatRenderer.liveBroadcastDetails.startTimestamp)
   const time =
-    currentDate.getFullYear().toString()
-    + (currentDate.getMonth() + 1).toString().padStart(2, '0')
-    + currentDate.getDate().toString().padStart(2, '0')
+    liveDate.getFullYear().toString()
+    + (liveDate.getMonth() + 1).toString().padStart(2, '0')
+    + liveDate.getDate().toString().padStart(2, '0')
 
   const replaced = substitute(outputDir, {
     DATE: time,
@@ -189,6 +189,7 @@ async function download(
   const solved = path.resolve(process.cwd(), replaced)
 
   await fs.mkdir(solved, { recursive: true })
+  await fs.writeFile(path.resolve(solved, 'info.json'), JSON.stringify(info, undefined, 2))
 
   const assetsDir = path.resolve(solved, 'assets')
 

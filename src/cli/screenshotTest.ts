@@ -38,7 +38,8 @@ async function main() {
             type: 'text',
             text: 'ПриветПриветПриветПриветПриветПриветПриветПриветПриветПривет'
           }
-        ]
+        ],
+        time: ''
       },
       {
         id: 'b',
@@ -75,7 +76,8 @@ async function main() {
             type: 'text',
             text: 'Привет'
           }
-        ]
+        ],
+        time: ''
       },
       {
         id: 'c',
@@ -92,7 +94,8 @@ async function main() {
             type: 'text',
             text: 'エンジョイ烏​普通に仲間になったな'
           },
-        ]
+        ],
+        time: ''
       },
       {
         id: 'd',
@@ -109,7 +112,8 @@ async function main() {
             type: 'text',
             text: 'エンジョイ烏​普通に仲間になったな'
           },
-        ]
+        ],
+        time: ''
       },
       {
         id: 'e',
@@ -122,7 +126,8 @@ async function main() {
             type: 'text',
             text: 'Привет'
           },
-        ]
+        ],
+        time: ''
       },
       {
         id: 'f',
@@ -155,7 +160,8 @@ async function main() {
             type: 'image',
             image: './emojis/emoji_u1f427.svg'
           },
-        ]
+        ],
+        time: ''
       }
     ]);
 

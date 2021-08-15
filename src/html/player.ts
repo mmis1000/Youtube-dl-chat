@@ -13,6 +13,7 @@ interface Line {
   head: string;
   badges: ({ type: 'url', url: string } | { type: 'icon', icon: 'moderator' })[];
   message: Segment[];
+  time: string;
 }
 
 const items = document.querySelector<HTMLDivElement>('.items')!;

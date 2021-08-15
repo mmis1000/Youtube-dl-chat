@@ -267,6 +267,14 @@ export interface VideoData {
       isLive?: boolean
       isLiveContent?: boolean
     }
+    microformat: {
+      playerMicroformatRenderer: {
+        liveBroadcastDetails: {
+          startTimestamp: string
+          endTimestamp?: string
+        }
+      }
+    }
   }
 }
 

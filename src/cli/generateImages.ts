@@ -8,7 +8,9 @@ import { Actions, ReplayAbleChatActions } from '../interfaces-youtube-response';
 const ADMIN_COLOR = '#5e84fe'
 const MEMBER_COLOR = '#2ba640'
 
+const SCALE_FACTOR = 1
 const WIDTH = 320
+const BATCH_SIZE = 1000
 const chromiumVersion = '848005'
 const currentDir = process.cwd();
 const logDir = path.resolve(currentDir, process.argv[2]);
@@ -96,6 +98,27 @@ function createTempServer(assetsDir: string) {
   })
 }
 
+export interface Screenshot {
+  id: string
+  file: string
+  offset: number
+  height: number
+  fullHeight: number
+  time: string
+}
+
+export interface ScreenshotFile {
+  file: string
+  startItem: string
+  endItem: string
+  height: number
+}
+export interface ScreenshotSummary {
+  files: ScreenshotFile[]
+
+  entries: Screenshot[]
+}
+
 async function main() {
   const serverPort = await createTempServer(logAssetDir)
   console.log(`Temporary server listening at http://localhost:${serverPort}/`)
@@ -124,7 +147,7 @@ async function main() {
   await page.setViewport({
     width: WIDTH,
     height: 480,
-    deviceScaleFactor: 2
+    deviceScaleFactor: SCALE_FACTOR
   });
 
   await page.goto(`http://localhost:${serverPort}/`, { waitUntil: 'networkidle0' });
@@ -176,7 +199,8 @@ async function main() {
                 image: it.emoji?.image.thumbnails[1].url ?? ''
               }
             }
-          })
+          }),
+          time: new Date(Number(renderer.timestampUsec) / 1000).toISOString()
         }]
       } else {
         return []
@@ -194,33 +218,45 @@ async function main() {
     return lines
   }
 
-  const infos: {
-    id: string
-    file: string
-    offset: number
-    height: number
-    fullHeight: number
-  }[] = []
 
-  const BATCH = 100
-  for (let i = 0; i < entries.length; i += BATCH) {
+  const files: ScreenshotFile[] = []
+
+  const infos: Screenshot[] = []
+
+  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const start = Date.now()
-    const slice = entries.slice(i, i + BATCH)
+    const slice = entries.slice(i, i + BATCH_SIZE)
 
-    const viewport = await page.evaluate((actions: Line[]) => {
-      return printLines(actions)
+    const viewport = await page.evaluate(async (actions: Line[]) => {
+      const res = await printLines(actions)
+      return {
+        height: res.height,
+        areas: res.areas.map(it => ({
+          ...it,
+          time: actions.find(a => a.id === it.id)!.time
+        })
+      )
+    }
     }, mapActions(slice) as any)
+
+    files.push({
+      file: `${~~(i / BATCH_SIZE) + 1}.png`,
+      startItem: viewport.areas[0].id,
+      endItem: viewport.areas[viewport.areas.length - 1].id,
+      height: ~~viewport.height
+    })
 
     infos.push(...viewport.areas.map(it => ({
       id: it.id,
-      file: `${~~(i / 100) + 1}.png`,
+      file: `${~~(i / BATCH_SIZE) + 1}.png`,
       offset: it.offset,
       height: it.height,
-      fullHeight: ~~viewport.height
+      fullHeight: ~~viewport.height,
+      time: it.time
     })))
   
     await page.screenshot({
-      path: `${outputDir}/${~~(i / 100) + 1}.png`,
+      path: `${outputDir}/${~~(i / BATCH_SIZE) + 1}.png`,
       type: 'png',
       clip: {
         x: 0,
@@ -228,12 +264,15 @@ async function main() {
         width: WIDTH,
         height: ~~viewport.height
       },
-      omitBackground: true
+      omitBackground: true,
     })
 
-    console.log(`Generated entries #${i} to #${Math.min(i + 99, entries.length - 1)} (${Date.now() - start}ms)`)
+    console.log(`Generated entries #${i} to #${Math.min(i + (BATCH_SIZE - 1), entries.length - 1)} (${Date.now() - start}ms)`)
   }
-  await fs.writeFile(`${logDir}/screenshots.json`, JSON.stringify(infos, undefined, 2))
+  await fs.writeFile(`${logDir}/screenshots.json`, JSON.stringify(<ScreenshotSummary>{
+    files: files,
+    entries: infos
+  }, undefined, 2))
 
   await browser.close();
 }
