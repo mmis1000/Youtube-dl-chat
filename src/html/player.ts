@@ -20,7 +20,10 @@ const items = document.querySelector<HTMLDivElement>('.items')!;
 
 const MODERATOR_ICON = document.importNode(document.querySelector<HTMLTemplateElement>('template#moderator-icon')!.content.querySelector('svg')!, true)
 
-async function printLines(lines: Line[]) {
+async function printLines(lines: Line[], paddingVertical: number = 0) {
+  items.style.paddingTop = `${paddingVertical}px`
+  items.style.paddingBottom = `${paddingVertical}px`
+
   items.innerHTML = ''
 
   const elements: [id: string, element: HTMLDivElement][] = []
@@ -45,18 +48,18 @@ async function printLines(lines: Line[]) {
     return image
   }
 
-  for (let i = 0; i < lines.length; i++) {
+  for (let line of lines) {
     const message = document.createElement('div');
     message.className = 'message';
 
-    elements.push([lines[i].id, message])
+    elements.push([line.id, message])
 
     {
       const headWrapper = document.createElement('div');
       headWrapper.className = 'headWrapper';
       message.appendChild(headWrapper);
 
-      const head = createImage(lines[i].head);
+      const head = createImage(line.head);
       head.className = 'head';
       headWrapper.appendChild(head);
 
@@ -78,11 +81,11 @@ async function printLines(lines: Line[]) {
       {
         const name = document.createElement('span');
         name.className = 'name';
-        name.textContent = lines[i].name;
-        name.style.color = lines[i].color;
+        name.textContent = line.name;
+        name.style.color = line.color;
         nameWrapper.appendChild(name);
 
-        for (const [index, badge] of lines[i].badges.entries()) {
+        for (const [index, badge] of line.badges.entries()) {
           let item: HTMLElement
           if (badge.type === 'url') {
             const image = item = createImage(badge.url);
@@ -91,7 +94,7 @@ async function printLines(lines: Line[]) {
           } else {
             const svgWrapper = item = document.createElement('div');
             svgWrapper.className = 'badge'
-            svgWrapper.style.color = lines[i].color
+            svgWrapper.style.color = line.color
 
             const svgIcon = MODERATOR_ICON.cloneNode(true);
             svgWrapper.appendChild(svgIcon)
@@ -101,7 +104,7 @@ async function printLines(lines: Line[]) {
         }
       }
 
-      for (let seg of lines[i].message) {
+      for (let seg of line.message) {
         if (seg.type === 'text') {
           const text = document.createTextNode(seg.text)
           messageWrapperInner.appendChild(text);

@@ -10,7 +10,9 @@ const MEMBER_COLOR = '#2ba640'
 
 const SCALE_FACTOR = 1
 const WIDTH = 320
-const BATCH_SIZE = 1000
+const HEIGHT = 480
+const BATCH_SIZE = 200
+const PAD_ITEM = Math.ceil(HEIGHT / 16)
 const chromiumVersion = '848005'
 const currentDir = process.cwd();
 const logDir = path.resolve(currentDir, process.argv[2]);
@@ -84,7 +86,7 @@ function createTempServer(assetsDir: string) {
   server.on('clientError', (err, socket) => {
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
   });
-  
+
   return new Promise<number>((resolve, reject) => {
     server.once('error', (e) => reject(e))
 
@@ -101,20 +103,15 @@ function createTempServer(assetsDir: string) {
 export interface Screenshot {
   id: string
   file: string
-  offset: number
-  height: number
-  fullHeight: number
   time: string
+  offset: number
 }
 
-export interface ScreenshotFile {
-  file: string
-  startItem: string
-  endItem: string
-  height: number
-}
 export interface ScreenshotSummary {
-  files: ScreenshotFile[]
+  info: {
+    width: number
+    height: number
+  }
 
   entries: Screenshot[]
 }
@@ -146,7 +143,7 @@ async function main() {
 
   await page.setViewport({
     width: WIDTH,
-    height: 480,
+    height: HEIGHT,
     deviceScaleFactor: SCALE_FACTOR
   });
 
@@ -219,13 +216,16 @@ async function main() {
   }
 
 
-  const files: ScreenshotFile[] = []
-
   const infos: Screenshot[] = []
 
-  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-    const start = Date.now()
-    const slice = entries.slice(i, i + BATCH_SIZE)
+  const start = Date.now()
+
+  let imageIndex = 0
+
+  for (let startItem = 0; startItem < entries.length; startItem += BATCH_SIZE) {
+    const padItemCount = (startItem === 0) ? 0 : PAD_ITEM
+
+    const slice = entries.slice(startItem - padItemCount, startItem + BATCH_SIZE)
 
     const viewport = await page.evaluate(async (actions: Line[]) => {
       const res = await printLines(actions)
@@ -234,43 +234,50 @@ async function main() {
         areas: res.areas.map(it => ({
           ...it,
           time: actions.find(a => a.id === it.id)!.time
-        })
-      )
-    }
+        }))
+      }
     }, mapActions(slice) as any)
 
-    files.push({
-      file: `${~~(i / BATCH_SIZE) + 1}.png`,
-      startItem: viewport.areas[0].id,
-      endItem: viewport.areas[viewport.areas.length - 1].id,
-      height: ~~viewport.height
-    })
+    const partial: Screenshot[] = []
 
-    infos.push(...viewport.areas.map(it => ({
+    partial.push(...viewport.areas.slice(padItemCount).map((it, i) => ({
       id: it.id,
-      file: `${~~(i / BATCH_SIZE) + 1}.png`,
-      offset: it.offset,
-      height: it.height,
-      fullHeight: ~~viewport.height,
-      time: it.time
+      file: `${imageIndex + i + 1}.png`,
+      time: it.time,
+      offset: ~~(it.offset + it.height - HEIGHT)
     })))
-  
-    await page.screenshot({
-      path: `${outputDir}/${~~(i / BATCH_SIZE) + 1}.png`,
-      type: 'png',
-      clip: {
-        x: 0,
-        y: 0,
-        width: WIDTH,
-        height: ~~viewport.height
-      },
-      omitBackground: true,
-    })
 
-    console.log(`Generated entries #${i} to #${Math.min(i + (BATCH_SIZE - 1), entries.length - 1)} (${Date.now() - start}ms)`)
+    imageIndex += viewport.areas.length - padItemCount
+
+    infos.push(...partial)
+
+    for (let info of partial) {
+      const start = Date.now()
+
+      await page.screenshot({
+        path: `${outputDir}/${info.file}`,
+        type: 'png',
+        clip: {
+          x: 0,
+          y: info.offset,
+          width: WIDTH,
+          height: HEIGHT
+        },
+        omitBackground: true,
+      })
+
+      console.log(`Generated entry ${info.file} (${Date.now() - start}ms)`)
+    }
+
   }
+
+  console.log(`Generated entries #0 to #${imageIndex - 1} (${Date.now() - start}ms)`)
+
   await fs.writeFile(`${logDir}/screenshots.json`, JSON.stringify(<ScreenshotSummary>{
-    files: files,
+    info: {
+      width: WIDTH * SCALE_FACTOR,
+      height: HEIGHT * SCALE_FACTOR
+    },
     entries: infos
   }, undefined, 2))
 
