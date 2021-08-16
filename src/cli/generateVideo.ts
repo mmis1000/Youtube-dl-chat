@@ -1,7 +1,7 @@
 import path from 'path'
 import { promises as fs } from 'fs';
 import { VideoData } from '../interfaces-youtube-response';
-import { Screenshot, ScreenshotSummary } from './generateImages';
+import { Screenshot, ScreenshotSummary } from '../screenshot-utils';
 
 const FPS = 25
 
