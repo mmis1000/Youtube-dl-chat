@@ -20,6 +20,7 @@ export interface ScreenshotSummary {
   info: {
     width: number
     height: number
+    scale: number
     emptyFile: string
   }
 
@@ -119,199 +120,187 @@ export async function generateImages(
   getIndexHTML: () => Promise<string>,
   getPlayerJs: () => Promise<string>,
   revisionInfo: BrowserFetcherRevisionInfo,
-  logPath: string,
+  entries: Actions[],
   logAssetDir: string,
-  screenshotInfoPath: string,
   screenshotDir: string,
-  WIDTH: number,
-  HEIGHT: number,
-  SCALE_FACTOR: number
+  WIDTH: number = 320,
+  HEIGHT: number = 480,
+  SCALE_FACTOR: number = 1
 ) {
   const PAD_ITEM = Math.ceil(HEIGHT / 16)
 
   const serverPort = await createTempServer(getIndexHTML, getPlayerJs, logAssetDir)
+
   console.log(`Temporary server listening at http://localhost:${serverPort}/`)
-
-  // const browserFetcher = (puppeteer as any).createBrowserFetcher() as BrowserFetcher;
-
-  // const localRevisions = await browserFetcher.localRevisions()
-
-  // let revisionInfo: BrowserFetcherRevisionInfo
-
-  // if (localRevisions.find(it => it === chromiumVersion)) {
-  //   revisionInfo = await browserFetcher.revisionInfo(chromiumVersion)
-  //   console.log(`Chromium ${chromiumVersion} already available at ${revisionInfo.folderPath}`)
-  // } else {
-  //   console.error(`Downloading chromium ${chromiumVersion}`)
-  //   revisionInfo = await browserFetcher.download(chromiumVersion);
-  //   console.error(`Chromium ${chromiumVersion} downloaded to ${revisionInfo.folderPath}`)
-  // }
 
   const browser = await puppeteer.launch({
     executablePath: revisionInfo.executablePath
   });
 
-  const page = await browser.newPage();
+  try {
+    const page = await browser.newPage();
 
-  await page.setViewport({
-    width: WIDTH,
-    height: HEIGHT,
-    deviceScaleFactor: SCALE_FACTOR
-  });
-
-  await page.goto(`http://localhost:${serverPort}/`, { waitUntil: 'networkidle0' });
-
-  const entries: Actions[] = (await fs.readFile(logPath, 'utf8')).split(/\r?\n/g).filter(Boolean).map(line => JSON.parse(line))
-
-  await fs.mkdir(screenshotDir, { recursive: true })
-
-  const mapActions = (actions: Actions[]): Line[] => {
-    const lines: Line[] = []
-
-    const mapAction = (action: ReplayAbleChatActions): Line[] => {
-      if (!action.addChatItemAction) {
-        return []
-      }
-
-      const item = action.addChatItemAction.item
-
-      if (item.liveChatTextMessageRenderer) {
-        const renderer = item.liveChatTextMessageRenderer
-        const isMember = renderer.authorBadges?.find(it => it.liveChatAuthorBadgeRenderer?.customThumbnail != null) != null
-        const isAdmin = renderer.authorBadges?.find(it => it.liveChatAuthorBadgeRenderer?.icon != null) != null
-        return [{
-          name: renderer.authorName?.simpleText ?? "",
-          head: renderer.authorPhoto?.thumbnails[1]?.url ?? "",
-          id: renderer.id,
-          color: isAdmin ? ADMIN_COLOR : isMember ? MEMBER_COLOR : '#ffffff',
-          badges: renderer.authorBadges?.map(it => {
-            if (it.liveChatAuthorBadgeRenderer?.customThumbnail?.thumbnails[1].url) {
-              return {
-                type: 'url',
-                url: it.liveChatAuthorBadgeRenderer?.customThumbnail?.thumbnails[1].url
-              }
-            } else {
-              return {
-                type: 'icon', icon: 'moderator'
-              }
-            }
-          }) || [],
-          message: renderer.message.runs.map(it => {
-            if (it.text) {
-              return {
-                type: 'text' as 'text',
-                text: it.text
-              }
-            } else {
-              return {
-                type: 'image',
-                image: it.emoji?.image.thumbnails[1].url ?? ''
-              }
-            }
-          }),
-          time: new Date(Number(renderer.timestampUsec) / 1000).toISOString()
-        }]
-      } else {
-        return []
-      }
-    }
-
-    for (const action of actions) {
-      if (action.replayChatItemAction) {
-        lines.push(...action.replayChatItemAction.actions.map(mapAction).flatMap(it => it))
-      } else {
-        lines.push(...mapAction(action))
-      }
-    }
-
-    return lines
-  }
-
-  // Generate empty file
-
-  const emptyFile = 'empty.png'
-
-  await page.screenshot({
-    path: `${screenshotDir}/${emptyFile}`,
-    type: 'png',
-    clip: {
-      x: 0,
-      y: -HEIGHT,
+    await page.setViewport({
       width: WIDTH,
-      height: HEIGHT
-    },
-    omitBackground: true,
-  })
+      height: HEIGHT,
+      deviceScaleFactor: SCALE_FACTOR
+    });
 
-  console.log(`Generated empty file`)
+    await page.goto(`http://localhost:${serverPort}/`, { waitUntil: 'networkidle0' });
 
-  // Generate actual screenshot
+    // const entries: Actions[] = (await fs.readFile(logPath, 'utf8')).split(/\r?\n/g).filter(Boolean).map(line => JSON.parse(line))
 
-  const infos: Screenshot[] = []
+    await fs.mkdir(screenshotDir, { recursive: true })
 
-  const start = Date.now()
+    const mapActions = (actions: Actions[]): Line[] => {
+      const lines: Line[] = []
 
-  let imageIndex = 0
+      const mapAction = (action: ReplayAbleChatActions): Line[] => {
+        if (!action.addChatItemAction) {
+          return []
+        }
 
-  for (let startItem = 0; startItem < entries.length; startItem += BATCH_SIZE) {
-    const padItemCount = (startItem === 0) ? 0 : PAD_ITEM
+        const item = action.addChatItemAction.item
 
-    const slice = entries.slice(startItem - padItemCount, startItem + BATCH_SIZE)
-
-    const viewport = await page.evaluate(async (actions: Line[]) => {
-      const res = await printLines(actions)
-      return {
-        height: res.height,
-        areas: res.areas.map(it => ({
-          ...it,
-          time: actions.find(a => a.id === it.id)!.time
-        }))
+        if (item.liveChatTextMessageRenderer) {
+          const renderer = item.liveChatTextMessageRenderer
+          const isMember = renderer.authorBadges?.find(it => it.liveChatAuthorBadgeRenderer?.customThumbnail != null) != null
+          const isAdmin = renderer.authorBadges?.find(it => it.liveChatAuthorBadgeRenderer?.icon != null) != null
+          return [{
+            name: renderer.authorName?.simpleText ?? "",
+            head: renderer.authorPhoto?.thumbnails[1]?.url ?? "",
+            id: renderer.id,
+            color: isAdmin ? ADMIN_COLOR : isMember ? MEMBER_COLOR : '#ffffff',
+            badges: renderer.authorBadges?.map(it => {
+              if (it.liveChatAuthorBadgeRenderer?.customThumbnail?.thumbnails[1].url) {
+                return {
+                  type: 'url',
+                  url: it.liveChatAuthorBadgeRenderer?.customThumbnail?.thumbnails[1].url
+                }
+              } else {
+                return {
+                  type: 'icon', icon: 'moderator'
+                }
+              }
+            }) || [],
+            message: renderer.message.runs.map(it => {
+              if (it.text) {
+                return {
+                  type: 'text' as 'text',
+                  text: it.text
+                }
+              } else {
+                return {
+                  type: 'image',
+                  image: it.emoji?.image.thumbnails[1].url ?? ''
+                }
+              }
+            }),
+            time: new Date(Number(renderer.timestampUsec) / 1000).toISOString()
+          }]
+        } else {
+          return []
+        }
       }
-    }, mapActions(slice) as any)
 
-    const partial: Screenshot[] = []
+      for (const action of actions) {
+        if (action.replayChatItemAction) {
+          lines.push(...action.replayChatItemAction.actions.map(mapAction).flatMap(it => it))
+        } else {
+          lines.push(...mapAction(action))
+        }
+      }
 
-    partial.push(...viewport.areas.slice(padItemCount).map((it, i) => ({
-      id: it.id,
-      file: `${imageIndex + i + 1}.png`,
-      time: it.time,
-      offset: ~~(it.offset + it.height - HEIGHT)
-    })))
-
-    imageIndex += viewport.areas.length - padItemCount
-
-    infos.push(...partial)
-
-    for (let info of partial) {
-      const start = Date.now()
-
-      await page.screenshot({
-        path: `${screenshotDir}/${info.file}`,
-        type: 'png',
-        clip: {
-          x: 0,
-          y: info.offset,
-          width: WIDTH,
-          height: HEIGHT
-        },
-        omitBackground: true,
-      })
-
-      console.log(`Generated entry ${info.file} (${Date.now() - start}ms)`)
+      return lines
     }
 
+    // Generate empty file
+
+    const emptyFile = 'empty.png'
+
+    await page.screenshot({
+      path: `${screenshotDir}/${emptyFile}`,
+      type: 'png',
+      clip: {
+        x: 0,
+        y: -HEIGHT,
+        width: WIDTH,
+        height: HEIGHT
+      },
+      omitBackground: true,
+    })
+
+    console.log(`Generated empty file`)
+
+    // Generate actual screenshot
+
+    const infos: Screenshot[] = []
+
+    const start = Date.now()
+
+    let imageIndex = 0
+
+    for (let startItem = 0; startItem < entries.length; startItem += BATCH_SIZE) {
+      const padItemCount = (startItem === 0) ? 0 : PAD_ITEM
+
+      const slice = entries.slice(startItem - padItemCount, startItem + BATCH_SIZE)
+
+      const viewport = await page.evaluate(async (actions: Line[]) => {
+        const res = await printLines(actions)
+        return {
+          height: res.height,
+          areas: res.areas.map(it => ({
+            ...it,
+            time: actions.find(a => a.id === it.id)!.time
+          }))
+        }
+      }, mapActions(slice) as any)
+
+      const partial: Screenshot[] = []
+
+      partial.push(...viewport.areas.slice(padItemCount).map((it, i) => ({
+        id: it.id,
+        file: `${imageIndex + i + 1}.png`,
+        time: it.time,
+        offset: ~~(it.offset + it.height - HEIGHT)
+      })))
+
+      imageIndex += viewport.areas.length - padItemCount
+
+      infos.push(...partial)
+
+      for (let info of partial) {
+        const start = Date.now()
+
+        await page.screenshot({
+          path: `${screenshotDir}/${info.file}`,
+          type: 'png',
+          clip: {
+            x: 0,
+            y: info.offset,
+            width: WIDTH,
+            height: HEIGHT
+          },
+          omitBackground: true,
+        })
+
+        console.log(`Generated entry ${info.file} (${Date.now() - start}ms)`)
+      }
+
+    }
+
+    console.log(`Generated entries #0 to #${imageIndex - 1} (${Date.now() - start}ms)`)
+
+    return <ScreenshotSummary>{
+      info: {
+        width: WIDTH,
+        height: HEIGHT,
+        scale: SCALE_FACTOR,
+        emptyFile: emptyFile
+      },
+      entries: infos
+    }
+  } finally {
+    await browser.close();
   }
-
-  console.log(`Generated entries #0 to #${imageIndex - 1} (${Date.now() - start}ms)`)
-
-  await fs.writeFile(screenshotInfoPath, JSON.stringify(<ScreenshotSummary>{
-    info: {
-      width: WIDTH * SCALE_FACTOR,
-      height: HEIGHT * SCALE_FACTOR,
-      emptyFile: emptyFile
-    },
-    entries: infos
-  }, undefined, 2))
-
-  await browser.close();
 }

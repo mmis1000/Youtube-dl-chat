@@ -2,6 +2,7 @@ import puppeteer, { BrowserFetcherRevisionInfo, BrowserFetcher } from 'puppeteer
 import path from 'path'
 import { promises as fs } from 'fs';
 import { generateImages, getChromiumDir } from '../screenshot-utils';
+import { Actions } from '../interfaces-youtube-response';
 
 const SCALE_FACTOR = 1
 const WIDTH = 320
@@ -50,18 +51,21 @@ async function main() {
     console.error(`Chromium ${chromiumVersion} downloaded to ${revisionInfo.folderPath}`)
   }
 
-  await generateImages(
+  const entries: Actions[] = (await fs.readFile(logFull, 'utf8')).split(/\r?\n/g).filter(Boolean).map(line => JSON.parse(line))
+
+  const res = await generateImages(
     getIndexHTML,
     getPlayerJs,
     revisionInfo,
-    logFull,
+    entries,
     logAssetDir,
-    logDir + '/screenshots.json',
     outputDir,
     WIDTH,
     HEIGHT,
     SCALE_FACTOR
   )
+
+  await fs.writeFile(logDir + '/screenshots.json', JSON.stringify(res, undefined, 2))
 }
 
 main()
