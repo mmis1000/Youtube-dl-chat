@@ -1,22 +1,23 @@
 import path from 'path'
-import { promises as fs, createReadStream } from 'fs';
-import { Actions, ReplayAbleChatActions, VideoData } from '../interfaces-youtube-response';
+import { promises as fs } from 'fs';
+import { VideoData } from '../interfaces-youtube-response';
 import { Screenshot, ScreenshotSummary } from './generateImages';
 
 const FPS = 25
-const WIDTH = 320
-const HEIGHT = 480
 
 const currentDir = process.cwd();
 const logDir = path.resolve(currentDir, process.argv[2]);
 const infoFile = path.resolve(logDir, 'info.json');
-const screenshotDir = path.resolve(logDir, 'screenshots');
 const screenshotMeta = path.resolve(logDir, 'screenshots.json');
 const ffmpegInfoFile = path.resolve(logDir, 'timestamps.txt');
 const shellCommandsFile = path.resolve(logDir, 'genVideo.sh');
 
 async function main() {
   const summary = JSON.parse(await fs.readFile(screenshotMeta, 'utf-8')) as ScreenshotSummary
+
+  const WIDTH = summary.info.width
+  const HEIGHT = summary.info.height
+
   const screenshots = summary.entries
   const data: VideoData = JSON.parse(await fs.readFile(infoFile, 'utf-8')) as VideoData
 
@@ -89,7 +90,7 @@ async function main() {
   
   await fs.writeFile(ffmpegInfoFile, res)
 
-  await fs.writeFile(shellCommandsFile, `ffmpeg -f lavfi -i color=c=black:s=${WIDTH}x${HEIGHT} -f concat -i timestamps.txt -filter_complex "[0:v][1:v]overlay=shortest=1[v1]" -map '[v1]' -pix_fmt yuv420p -c:v libx264 test.mp4`)
+  await fs.writeFile(shellCommandsFile, `ffmpeg -f lavfi -i color=c=black:s=${WIDTH}x${HEIGHT} -f concat -i timestamps.txt -filter_complex "[1:v]fps=fps=${FPS}[v0];[0:v][v0]overlay=shortest=1[v1]" -map '[v1]' -pix_fmt yuv420p -c:v libx264 test.mp4`)
 }
 
 main()
