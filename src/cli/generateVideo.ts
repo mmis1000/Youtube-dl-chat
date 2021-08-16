@@ -22,7 +22,11 @@ async function main() {
   )
 
   await fs.writeFile(ffmpegInfoFile, configs.ffmpegInfo)
-  await fs.writeFile(shellCommandsFile, configs.shellCommand)
+  await fs.writeFile(shellCommandsFile, '#!/bin/sh\n' + configs.shellCommand)
+
+  try {
+    await fs.chmod(shellCommandsFile, '755')
+  } catch (err) {}
 }
 
 main()

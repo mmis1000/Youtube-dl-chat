@@ -26,7 +26,10 @@ To get the scripts.
 ```txt
 Usage: youtube-chat-dl [options] <url>
 
-This program is used to dump chat from youtube chatroom.
+The command for download chat
+Usage: youtubeChatDl.js [options] <url>
+
+This is program is used to dump chat from youtube chatroom.
 The full output is saved in a directory with the following structure:
 
   /[output]/chat.jsonl
@@ -38,6 +41,11 @@ With a plain text file chat.txt for readability.
 
 The information in chat.jsonl with assets downloaded should be enough
   to reconstruct the chat visual identically offline.
+
+Commands:
+  youtubeChatDl.js <url>            The command for download chat      [default]
+  youtubeChatDl.js video <dirname>  The command for Generate video from recorded
+                                    chat
 
 Positionals:
   url  The YouTube stream/archive URL/ID                                [string]
@@ -55,6 +63,8 @@ Options:
   -j, --cookie-jar        Cookie jar path for authorization
                                                         [string] [default: null]
   -w, --write-cookie-jar  Write back to Cookie jar    [boolean] [default: false]
+      --dry               Dry run, show parsed arguments only
+                                                      [boolean] [default: false]
 ```
 
 ### Dump archive chat only

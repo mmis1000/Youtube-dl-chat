@@ -3,11 +3,16 @@ import { Screenshot, ScreenshotSummary } from "./screenshot-utils"
 
 const FPS = 25
 
+const escapeArg = (str: string) => {
+  return "'" +  str.replace(/'/g, `'"'"'`) + "'"
+}
+
 export function generateFfmpegConfigs (
   data: VideoData,
   summary: ScreenshotSummary,
   screenshotDir: string = 'screenshots',
-  concatScriptName: string = 'timestamps.txt'
+  concatScriptName: string = 'timestamps.txt',
+  outputFileName: string = 'test.mp4'
 ) {
   const WIDTH = summary.info.width
   const HEIGHT = summary.info.height
@@ -21,12 +26,6 @@ export function generateFfmpegConfigs (
     : new Date(new Date(screenshots[screenshots.length - 1].time).getTime() + 1000 * 10)
   
   const totalLength = endTime.getTime() - startTime.getTime()
-
-  console.log(
-    data.parsedInitialPlayerResponse.microformat.playerMicroformatRenderer.liveBroadcastDetails.startTimestamp,
-    data.parsedInitialPlayerResponse.microformat.playerMicroformatRenderer.liveBroadcastDetails.endTimestamp,
-    totalLength / 1000
-  )
 
   interface Resolved extends Screenshot {
     relativeTime: number
@@ -42,7 +41,9 @@ export function generateFfmpegConfigs (
   const resolvedScreenshots: Resolved[] = screenshots.map((it, i, arr) => {
     const time = getRelativeFromTimestamp(it.time)
     const duration = arr[i + 1] == null 
-      ? endTime.getTime() - time
+      ? time > totalLength
+        ? 10000
+        : endTime.getTime() - new Date(it.time).getTime()
       : getRelativeFromTimestamp(arr[i + 1].time) - time
     return {
       ...it,
@@ -83,6 +84,6 @@ export function generateFfmpegConfigs (
 
   return {
     ffmpegInfo: res,
-    shellCommand: `ffmpeg -f lavfi -i color=c=black:s=${WIDTH * SCALE}x${HEIGHT * SCALE} -f concat -i ${concatScriptName} -filter_complex "[1:v]fps=fps=${FPS}[v0];[0:v][v0]overlay=shortest=1[v1]" -map '[v1]' -pix_fmt yuv420p -c:v libx264 test.mp4`
+    shellCommand: `ffmpeg -v quiet -stats -f lavfi -i color=c=black:s=${WIDTH * SCALE}x${HEIGHT * SCALE} -f concat -i ${escapeArg(concatScriptName)} -filter_complex "[1:v]fps=fps=${FPS}[v0];[0:v][v0]overlay=shortest=1[v1]" -map '[v1]' -pix_fmt yuv420p -c:v libx264 ${escapeArg(outputFileName)}`
   }
 }
