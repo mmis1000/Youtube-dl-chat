@@ -243,7 +243,8 @@ export async function generateImages(
     for (let startItem = 0; startItem < entries.length; startItem += BATCH_SIZE) {
       const padItemCount = (startItem === 0) ? 0 : PAD_ITEM
 
-      const slice = entries.slice(startItem - padItemCount, startItem + BATCH_SIZE)
+      const padItems = mapActions(entries.slice(startItem - padItemCount, startItem))
+      const items = mapActions(entries.slice(startItem, startItem + BATCH_SIZE))
 
       const viewport = await page.evaluate(async (actions: Line[]) => {
         const res = await printLines(actions)
@@ -254,16 +255,22 @@ export async function generateImages(
             time: actions.find(a => a.id === it.id)!.time
           }))
         }
-      }, mapActions(slice) as any)
+      }, [...padItems, ...items] as any)
 
       const partial: Screenshot[] = []
 
-      partial.push(...viewport.areas.slice(padItemCount).map((it, i) => ({
-        id: it.id,
-        file: `${imageIndex + i + 1}.png`,
-        time: it.time,
-        offset: ~~(it.offset + it.height - HEIGHT)
-      })))
+      partial.push(
+        ...viewport.areas
+        .filter(it => {
+          return padItems.findIndex(p => p.id === it.id) < 0
+        })
+        .map((it, i) => ({
+          id: it.id,
+          file: `${imageIndex + i + 1}.png`,
+          time: it.time,
+          offset: ~~(it.offset + it.height - HEIGHT)
+        }))
+      )
 
       imageIndex += viewport.areas.length - padItemCount
 
