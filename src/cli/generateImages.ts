@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import { generateImages, getChromiumDir } from '../screenshot-utils';
 import { Actions } from '../interfaces-youtube-response';
 
-const SCALE_FACTOR = 1
+const SCALE_FACTOR = 2
 const WIDTH = 320
 const HEIGHT = 480
 const chromiumVersion = '848005'

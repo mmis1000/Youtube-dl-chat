@@ -35,7 +35,7 @@ export const getChromiumDir = () => {
   if (platform === 'darwin') {
     chromiumDir = process.env.HOME + `/Library/Application Support/${APP_NAME}/local-chromium`
   } else if (platform === 'win32') {
-    chromiumDir = process.env.APPDATA + `\\${APP_NAME}\\local-chromium`
+    chromiumDir = ( process.env.LOCALAPPDATA ?? process.env.APPDATA) + `\\${APP_NAME}\\local-chromium`
   } else {
     if (process.env.XDG_DATA_HOME) {
       chromiumDir = process.env.XDG_DATA_HOME + `/${APP_NAME}/local-chromium`
