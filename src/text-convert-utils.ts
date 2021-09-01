@@ -5,7 +5,9 @@ const runsToText = (runs: TextRuns[]) => {
     if (it.text) {
       return it.text;
     } else {
-      return ' :' + it.emoji!.image.accessibility.accessibilityData.label + ': ';
+      return it.emoji!.image.accessibility
+        ? ' :' + it.emoji!.image.accessibility.accessibilityData.label + ': '
+        : it.emoji?.emojiId;
     }
   }).join('');
 };

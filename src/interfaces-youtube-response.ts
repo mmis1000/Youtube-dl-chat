@@ -67,7 +67,7 @@ type TextRunEmoji = NarrowableKeyedItems<TextRunKeys, {
         width:  number;
         height: number;
       }[],
-      accessibility: {
+      accessibility?: {
         accessibilityData: {
           label: string
         }
