@@ -192,7 +192,9 @@ export async function generateImages(
               } else {
                 return {
                   type: 'image',
-                  image: it.emoji?.image.thumbnails[1].url ?? ''
+                  image: it.emoji?.image.thumbnails[1]?.url 
+                    ?? it.emoji?.image.thumbnails[0]?.url
+                    ?? ''
                 }
               }
             }),

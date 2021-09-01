@@ -58,15 +58,17 @@ type TextRunKeys = 'text' | 'emoji'
 type TextRunText = NarrowableKeyedItems<TextRunKeys, {
   text: string
 }>
+
+type EmojiThumbnail = {
+  url:    string;
+  width:  number;
+  height: number;
+}
 type TextRunEmoji = NarrowableKeyedItems<TextRunKeys, {
   emoji: {
     emojiId: string
     image: {
-      thumbnails: {
-        url:    string;
-        width:  number;
-        height: number;
-      }[],
+      thumbnails: [EmojiThumbnail] | [EmojiThumbnail, EmojiThumbnail],
       accessibility?: {
         accessibilityData: {
           label: string
