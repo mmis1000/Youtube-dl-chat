@@ -1,5 +1,5 @@
 const url = process.argv[2]
-
+import fetch  from 'node-fetch'
 import { getPage, LiveChatClient } from '../comment-client'
 
 async function main () {
@@ -17,7 +17,7 @@ async function main () {
         console.error('Stream ended')
     })
 
-    const page = await getPage(url, {})
+    const page = await getPage(url, {}, fetch)
 
     client.start(page)
 }

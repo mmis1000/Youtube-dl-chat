@@ -1,4 +1,5 @@
-import fetch, { Response } from 'node-fetch'
+import type fetch from 'node-fetch'
+import type { Response } from 'node-fetch'
 import EventEmitter from "events";
 import { Actions, AddChatItemAction, ChatData, ChatXhrData, Continuations, LiveContinuation, LiveContinuation2, ReplayAbleChatActions, ReplayChatItemAction, VideoData } from "./interfaces-youtube-response";
 import { parseChat, parseVideo } from "./parser";
@@ -19,7 +20,7 @@ const assertResponseOk = (res: Response) => {
 export async function getPage(
   urlOrId: string,
   headers: Record<string, string>,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch
 ): Promise<VideoData> {
   const id = validateID(urlOrId) ? urlOrId : getURLVideoID(urlOrId)
   const fixedPageURL = 'https://www.youtube.com/watch?v=' + id
@@ -45,7 +46,7 @@ export async function getChat(
   isLive: boolean,
   continuation: string,
   headers: Record<string, string>,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch
 ): Promise<ChatData> {
   const url = isLive
   ? 'https://www.youtube.com/live_chat?continuation=' + continuation
@@ -76,7 +77,7 @@ export async function getChatXhr(
   headers: Record<string, string>,
   timeOffset: number = 0,
   isInvalidationTimeoutRequest: boolean = false,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch
 ): Promise<ChatXhrData> {
   const url = isLive
     ? `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${innerTubeKey}`
@@ -200,7 +201,10 @@ export class ReplayChatClient extends EventEmitter {
   constructor (private options: ClientOptions = {}) {
     super()
     this.downloadImage = options.imageDownloader ?? dummyDownloadImage
-    this.fetchImpl = options.fetchImpl ?? fetch
+    if (!options.fetchImpl) {
+      throw new Error('must provide a fetch implementation')
+    }
+    this.fetchImpl = options.fetchImpl
   }
 
   async processActions (actions: Actions[]) {
@@ -352,7 +356,10 @@ export class LiveChatClient extends EventEmitter {
   constructor (private options: ClientOptions = {}) {
     super()
     this.downloadImage = options.imageDownloader ?? dummyDownloadImage
-    this.fetchImpl = options.fetchImpl ?? fetch
+    if (!options.fetchImpl) {
+      throw new Error('must provide a fetch implementation')
+    }
+    this.fetchImpl = options.fetchImpl
   }
 
   async processActions (actions: Actions[]) {

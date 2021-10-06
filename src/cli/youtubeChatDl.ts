@@ -5,7 +5,7 @@ import { getPage, LiveChatClient, ReplayChatClient } from '../comment-client'
 import path from 'path'
 import { inspect } from 'util'
 import { convertToLines } from '../text-convert-utils'
-import { downloadImage } from '../assets-downloader'
+import { createDownloadImage } from '../assets-downloader'
 import { createFetchInstance } from '../fetch-with-cookie'
 import fetch from 'node-fetch'
 import { Actions, VideoData } from '../interfaces-youtube-response'
@@ -297,6 +297,8 @@ async function download(
 
   const jsonStream = createWriteStream(path.resolve(solved, 'chat.jsonl'), { flags: 'a' })
   const textStream = createWriteStream(path.resolve(solved, 'chat.txt'), { flags: 'a' })
+
+  const downloadImage = createDownloadImage(fetchImpl)
 
   const client = isLive ? new LiveChatClient({
     headers,
