@@ -14,6 +14,7 @@ import puppeteer, { BrowserFetcherRevisionInfo, BrowserFetcher } from 'puppeteer
 import { generateFfmpegConfigs } from '../video-capture-utils'
 import childProcess from 'child_process'
 import readline from 'readline'
+import wrapFetchRetry from 'fetch-retry'
 
 const chromiumVersion = '848005'
 
@@ -79,6 +80,14 @@ The information in chat.jsonl with assets downloaded should be enough
           default: <Array<string>>[],
           describe: 'Extra headers'
         },
+        retry: {
+          type: 'number',
+          alias: 'r',
+          nargs: 1,
+          array: true,
+          default: 3,
+          describe: 'Retry count on network error (5xx, not available...etc)'
+        },
         'cookie-jar': {
           type: 'string',
           alias: 'j',
@@ -141,7 +150,8 @@ The information in chat.jsonl with assets downloaded should be enough
       argv['with-assets'],
       argv['cookie-jar'],
       argv['write-cookie-jar'],
-      merged
+      merged,
+      argv.retry
     )
   })
   .command(['video <dirname>'], 'The command for Generate video from recorded chat', (yargs) => {
@@ -232,9 +242,23 @@ async function download(
   withAssets: boolean,
   cookieJar: string | null,
   writeCookieJar: boolean,
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  retryCount: number
 ) {
-  const fetchImpl = cookieJar ? createFetchInstance(cookieJar, writeCookieJar) : fetch
+  const fetchImplWithoutRetry = cookieJar ? createFetchInstance(cookieJar, writeCookieJar) : fetch
+  const fetchImpl = (retryCount > 0 ? wrapFetchRetry(fetchImplWithoutRetry as any, {
+    retryOn (attempt: number, error: any, response: Response) {
+      if (attempt > retryCount) {
+        console.error('Gave up on fetching ' + response.url + ' due to too many retries')
+        return false
+      }
+      // retry on any network error, or 5xx status codes
+      if (error !== null || response.status >= 500) {
+        console.error(`Retrying ${response.url} due to temporary network error (${attempt + 1}/${retryCount})`)
+        return true;
+      }
+    }
+  }) : fetchImplWithoutRetry) as typeof fetch
 
   const info = await getPage(url, headers, fetchImpl)
 
@@ -323,7 +347,7 @@ async function download(
   })
 
 
-  console.log(`Start to dump chat (${withAssets ? 'with' : 'without'} assets)`)
+  console.log(`Start to dump chat (${withAssets ? 'with' : 'without'} assets and ${retryCount} retr${ retryCount > 1 ? 'ies' : 'y' })`)
   console.log(`Output directory: ${solved}`)
 
   client.start(info)
