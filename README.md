@@ -60,6 +60,7 @@ Options:
   -a, --with-assets       Download image assets (avatar and emojis)
                                                       [boolean] [default: false]
   -h, --header            Extra headers                    [array] [default: []]
+  -r, --retry                                              [number] [default: 3]
   -j, --cookie-jar        Cookie jar path for authorization
                                                         [string] [default: null]
   -w, --write-cookie-jar  Write back to Cookie jar    [boolean] [default: false]
